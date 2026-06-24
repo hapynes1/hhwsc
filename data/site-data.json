@@ -19,5 +19,19 @@
       "fixed": false
     }
   ],
-  "cityAlbums": []
+  "cityAlbums": [
+    {
+      "id": "album-1782317796712",
+      "cityId": "shenzhen",
+      "cityName": "深圳",
+      "title": "欢乐谷",
+      "createdAt": 1782317796712,
+      "photos": [
+        {
+          "name": "微信图片_20260625001555_558_128.jpg",
+          "src": "data/cities/深圳/album-1782317796712/photo-001.jpg"
+        }
+      ]
+    }
+  ]
 }
