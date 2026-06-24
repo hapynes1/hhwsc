@@ -1,0 +1,550 @@
+:root {
+  color-scheme: light;
+  --ink: #2c2025;
+  --cream: #fff8f2;
+  --night: #101827;
+  --pink: #ffc2ce;
+  --brown: #6b4a4f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+.site-shell,
+.lock-screen,
+.story-page,
+.showcase {
+  width: 100vw;
+  height: 100vh;
+}
+
+.lock-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 24px;
+  isolation: isolate;
+}
+
+.hero-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -3;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    linear-gradient(180deg, rgba(16, 24, 39, 0.08), rgba(16, 24, 39, 0.32)),
+    radial-gradient(circle at 50% 46%, rgba(255, 248, 242, 0.16), transparent 24rem);
+}
+
+.lock-panel {
+  width: min(360px, calc(100% - 32px));
+  color: var(--cream);
+  text-align: center;
+}
+
+.password-title {
+  margin: 0 0 18px;
+  color: rgba(255, 248, 242, 0.92);
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  text-shadow: 0 10px 30px rgba(16, 24, 39, 0.45);
+}
+
+.password-form {
+  max-width: 280px;
+  margin-inline: auto;
+}
+
+.password-row input {
+  width: 100%;
+  height: 50px;
+  padding: 0 24px;
+  color: var(--cream);
+  caret-color: var(--cream);
+  text-align: center;
+  letter-spacing: 0.34em;
+  border: 1px solid rgba(255, 255, 255, 0.44);
+  border-radius: 999px;
+  outline: none;
+  background: rgba(16, 24, 39, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 18px 46px rgba(16, 24, 39, 0.24);
+  backdrop-filter: blur(10px);
+}
+
+.password-row input::placeholder {
+  color: rgba(255, 248, 242, 0.58);
+}
+
+.password-row input:focus {
+  border-color: rgba(255, 248, 242, 0.86);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 18px 54px rgba(16, 24, 39, 0.3),
+    0 0 0 4px rgba(255, 255, 255, 0.1);
+}
+
+.hint {
+  min-height: 24px;
+  margin: 12px 0 0;
+  color: rgba(255, 248, 242, 0.82);
+  font-size: 0.9rem;
+}
+
+.hint.error {
+  color: #ffd8dd;
+}
+
+.story-page {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 20% 16%, rgba(255, 194, 206, 0.18), transparent 24rem),
+    radial-gradient(circle at 78% 76%, rgba(191, 231, 228, 0.16), transparent 28rem),
+    var(--night);
+}
+
+.showcase {
+  position: relative;
+  overflow: hidden;
+  background: var(--night);
+}
+
+.showcase-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 0;
+  width: min(78vw, 980px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 248, 242, 0.24), rgba(255, 194, 206, 0.1) 42%, transparent 70%);
+  filter: blur(6px);
+  transform: translate(-50%, -50%);
+}
+
+.photo-flow {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  background: #0f1726;
+}
+
+.photo-flow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 48%, rgba(15, 23, 38, 0.18) 76%, rgba(15, 23, 38, 0.46) 100%),
+    linear-gradient(90deg, rgba(255, 194, 206, 0.08), transparent 20% 80%, rgba(191, 231, 228, 0.08));
+}
+
+.flow-lane {
+  position: absolute;
+  left: -12vw;
+  right: -12vw;
+  height: 31vh;
+  overflow: hidden;
+  transform-origin: center;
+}
+
+.flow-track {
+  height: 100%;
+  display: flex;
+  animation: laneMove 48s linear infinite;
+  will-change: transform;
+}
+
+.flow-tile {
+  flex: 0 0 clamp(220px, 25vw, 410px);
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #111827;
+}
+
+.flow-tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(var(--zoom, 1.08));
+  filter: saturate(1.06) contrast(1.02);
+}
+
+.flow-tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(15, 23, 38, 0.03), rgba(15, 23, 38, 0.16));
+}
+
+.lane-1 {
+  top: -5vh;
+  z-index: 5;
+  transform: rotate(2.4deg);
+}
+
+.lane-2 {
+  top: 18vh;
+  z-index: 4;
+  transform: rotate(-1.8deg);
+}
+
+.lane-2 .flow-track {
+  animation-duration: 56s;
+  animation-direction: reverse;
+}
+
+.lane-3 {
+  top: 39vh;
+  z-index: 3;
+  transform: rotate(1.5deg);
+}
+
+.lane-3 .flow-track {
+  animation-duration: 52s;
+}
+
+.lane-4 {
+  top: 60vh;
+  z-index: 2;
+  transform: rotate(-2.3deg);
+}
+
+.lane-4 .flow-track {
+  animation-duration: 64s;
+  animation-direction: reverse;
+}
+
+.lane-5 {
+  top: 79vh;
+  z-index: 1;
+  transform: rotate(1.8deg);
+}
+
+.lane-5 .flow-track {
+  animation-duration: 58s;
+}
+
+@keyframes laneMove {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-33.333%);
+  }
+}
+
+.pig-pet {
+  position: fixed;
+  right: clamp(14px, 3vw, 34px);
+  bottom: clamp(14px, 3vw, 28px);
+  z-index: 20;
+  width: 116px;
+  height: 128px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: none;
+  animation: petWalk 9s ease-in-out infinite;
+}
+
+body.story-open .pig-pet {
+  display: block;
+}
+
+.pig-body {
+  position: absolute;
+  left: 12px;
+  bottom: 20px;
+  width: 92px;
+  height: 78px;
+  border: 4px solid var(--brown);
+  border-radius: 48% 48% 44% 44%;
+  background: var(--pink);
+  box-shadow: inset -10px -12px 0 rgba(232, 127, 146, 0.22);
+  animation: pigBob 1.8s ease-in-out infinite;
+}
+
+.pig-face {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.pig-ear {
+  position: absolute;
+  top: -18px;
+  width: 30px;
+  height: 34px;
+  border: 4px solid var(--brown);
+  background: #ffadbf;
+  border-radius: 70% 70% 45% 45%;
+  transform-origin: 50% 100%;
+  animation: earWiggle 2.4s ease-in-out infinite;
+}
+
+.pig-ear-left {
+  left: 8px;
+  rotate: -18deg;
+}
+
+.pig-ear-right {
+  right: 8px;
+  rotate: 18deg;
+  animation-delay: -0.8s;
+}
+
+.pig-eye {
+  position: absolute;
+  top: 27px;
+  width: 9px;
+  height: 12px;
+  border-radius: 50%;
+  background: #4a3438;
+  animation: pigBlink 4.2s infinite;
+}
+
+.pig-eye-left {
+  left: 25px;
+}
+
+.pig-eye-right {
+  right: 25px;
+}
+
+.pig-snout {
+  position: absolute;
+  left: 50%;
+  top: 40px;
+  width: 34px;
+  height: 22px;
+  border: 3px solid var(--brown);
+  border-radius: 999px;
+  background: #ff9fb3;
+  transform: translateX(-50%);
+}
+
+.pig-snout span {
+  position: absolute;
+  top: 7px;
+  width: 5px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brown);
+}
+
+.pig-snout span:first-child {
+  left: 8px;
+}
+
+.pig-snout span:last-child {
+  right: 8px;
+}
+
+.pig-smile {
+  position: absolute;
+  left: 50%;
+  top: 62px;
+  width: 24px;
+  height: 12px;
+  border-bottom: 3px solid var(--brown);
+  border-radius: 0 0 999px 999px;
+  transform: translateX(-50%);
+}
+
+.pig-tail {
+  position: absolute;
+  right: -17px;
+  top: 36px;
+  width: 26px;
+  height: 22px;
+  border: 4px solid var(--brown);
+  border-left-color: transparent;
+  border-radius: 50%;
+  animation: tailSpin 1.2s linear infinite;
+}
+
+.pig-leg {
+  position: absolute;
+  bottom: -12px;
+  width: 18px;
+  height: 20px;
+  border: 4px solid var(--brown);
+  border-top: 0;
+  border-radius: 0 0 12px 12px;
+  background: #ffadbf;
+  animation: tinySteps 0.8s ease-in-out infinite;
+}
+
+.pig-leg-left {
+  left: 20px;
+}
+
+.pig-leg-right {
+  right: 20px;
+  animation-delay: -0.4s;
+}
+
+.pig-shadow {
+  position: absolute;
+  left: 22px;
+  right: 18px;
+  bottom: 8px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(39, 26, 31, 0.18);
+  filter: blur(2px);
+  animation: shadowPulse 1.8s ease-in-out infinite;
+}
+
+.pig-bubble {
+  position: absolute;
+  right: 86px;
+  bottom: 86px;
+  min-width: 96px;
+  padding: 8px 12px;
+  color: var(--brown);
+  font-size: 0.82rem;
+  white-space: nowrap;
+  border: 2px solid rgba(107, 74, 79, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 253, 251, 0.9);
+  box-shadow: 0 10px 26px rgba(39, 26, 31, 0.12);
+  opacity: 0;
+  transform: translateY(8px) scale(0.96);
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.pig-pet:hover .pig-bubble,
+.pig-pet.is-chatting .pig-bubble {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+@keyframes petWalk {
+  0%, 100% { translate: 0 0; }
+  36% { translate: -34px 0; }
+  68% { translate: -14px 0; }
+}
+
+@keyframes pigBob {
+  0%, 100% {
+    translate: 0 0;
+    rotate: -1deg;
+  }
+  50% {
+    translate: 0 -8px;
+    rotate: 1deg;
+  }
+}
+
+@keyframes earWiggle {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(9deg); }
+}
+
+@keyframes pigBlink {
+  0%, 92%, 100% { scale: 1 1; }
+  95% { scale: 1 0.12; }
+}
+
+@keyframes tailSpin {
+  to { rotate: 360deg; }
+}
+
+@keyframes tinySteps {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 4px; }
+}
+
+@keyframes shadowPulse {
+  0%, 100% {
+    scale: 1;
+    opacity: 0.16;
+  }
+  50% {
+    scale: 0.86;
+    opacity: 0.1;
+  }
+}
+
+@media (max-width: 700px) {
+  .flow-lane {
+    left: -32vw;
+    right: -32vw;
+    height: 25vh;
+  }
+
+  .flow-tile {
+    flex-basis: clamp(150px, 42vw, 230px);
+  }
+
+  .lane-1 { top: -3vh; }
+  .lane-2 { top: 17vh; }
+  .lane-3 { top: 37vh; }
+  .lane-4 { top: 57vh; }
+  .lane-5 { top: 77vh; }
+
+  .pig-pet {
+    width: 92px;
+    height: 104px;
+    transform: scale(0.82);
+    transform-origin: right bottom;
+  }
+
+  .pig-bubble {
+    right: 72px;
+    bottom: 76px;
+  }
+}

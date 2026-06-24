@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>陈立都——王思澄</title>
+  <link rel="stylesheet" href="styles-photo-particles.css?v=8" />
+</head>
+<body>
+  <main class="site-shell">
+    <section class="lock-screen" id="lockScreen" aria-label="纪念网页封面">
+      <img class="hero-image" src="assets/hero-lovechoice-minimal.svg" alt="一张简洁手绘风格的恋爱选择封面" />
+      <div class="hero-overlay"></div>
+      <div class="lock-panel">
+        <p class="password-title">请输入密码</p>
+        <div class="password-form" id="passwordForm">
+          <label class="sr-only" for="passwordInput">密码</label>
+          <div class="password-row">
+            <input id="passwordInput" name="password" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••••" autocomplete="off" aria-label="密码" />
+          </div>
+          <p class="hint" id="passwordHint" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="story-page is-hidden" id="storyPage" aria-label="照片展示页">
+      <div class="showcase" aria-label="动态照片展示区">
+        <div class="showcase-glow"></div>
+        <div class="photo-flow" id="photoFlow" aria-label="全屏动态照片流"></div>
+      </div>
+      <div class="home-actions" id="homeActions">
+        <button class="home-action-button" id="openClockButton" type="button" aria-label="纪念日时钟">
+          <span class="clock-icon" aria-hidden="true"></span>
+          <span class="sr-only">纪念日时钟</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="countdown-page is-hidden" id="countdownPage" aria-label="纪念日倒计时页面">
+      <div class="countdown-bg"></div>
+      <header class="countdown-header">
+        <button class="back-button" id="backHomeButton" type="button" aria-label="回到照片主页">
+          <span class="back-arrow" aria-hidden="true"></span>
+        </button>
+        <div>
+          <p class="countdown-kicker">260223</p>
+          <h1>纪念日时钟</h1>
+        </div>
+        <div class="route-mark" aria-label="北京到深圳">
+          <span>北京</span>
+          <i aria-hidden="true"></i>
+          <span>深圳</span>
+        </div>
+      </header>
+
+      <div class="countdown-content">
+        <section class="time-card love-days-card" aria-label="在一起的天数">
+          <p class="card-label">从 2026.02.23 到现在</p>
+          <div class="love-days">
+            <span id="loveDaysNumber">0</span>
+            <small>天</small>
+          </div>
+          <p class="card-note" id="loveDaysDetail">正在计算</p>
+        </section>
+
+        <section class="time-card next-meeting-card" aria-label="下次见面倒计时">
+          <p class="card-label">下次见面</p>
+          <h2 id="nextMeetingTitle">还没有添加</h2>
+          <div class="countdown-digits" id="nextMeetingCountdown">
+            <span>--</span><small>天</small>
+            <span>--</span><small>时</small>
+            <span>--</span><small>分</small>
+          </div>
+          <p class="card-note" id="nextMeetingNote">添加一个未来的见面时间，它会在到达后自动进入见面记录。</p>
+          <div class="upcoming-list" id="upcomingList"></div>
+        </section>
+
+        <section class="meeting-panel" aria-label="见面时间记录">
+          <div class="panel-heading">
+            <p class="card-label">见面记录</p>
+            <span id="meetingCount">0 次</span>
+          </div>
+          <div class="meeting-list" id="meetingList"></div>
+        </section>
+
+        <section class="add-panel" aria-label="添加见面倒计时">
+          <p class="card-label">添加下一次见面</p>
+          <div class="add-grid">
+            <input id="meetingNameInput" type="text" maxlength="18" placeholder="给这次见面起个名字" autocomplete="off" />
+            <input id="meetingDateInput" type="date" />
+            <input id="meetingTimeInput" type="time" value="12:00" />
+            <button class="add-meeting-button" id="addMeetingButton" type="button">添加</button>
+            <button class="cancel-edit-button is-hidden" id="cancelEditButton" type="button">取消</button>
+          </div>
+          <p class="add-hint" id="addMeetingHint">可以添加很多个。未来的是倒计时，到了时间会自动变成见面记录。</p>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <button class="pig-pet" id="pigPet" type="button" aria-label="小猪桌宠">
+    <span class="pig-bubble" id="pigBubble">等照片来啦</span>
+    <span class="pig-shadow"></span>
+    <span class="pig-body">
+      <span class="pig-ear pig-ear-left"></span>
+      <span class="pig-ear pig-ear-right"></span>
+      <span class="pig-face">
+        <span class="pig-eye pig-eye-left"></span>
+        <span class="pig-eye pig-eye-right"></span>
+        <span class="pig-snout">
+          <span></span>
+          <span></span>
+        </span>
+        <span class="pig-smile"></span>
+      </span>
+      <span class="pig-tail"></span>
+      <span class="pig-leg pig-leg-left"></span>
+      <span class="pig-leg pig-leg-right"></span>
+    </span>
+  </button>
+
+  <script src="photo-data.js?v=3"></script>
+  <script src="script-photo-particles.js?v=4"></script>
+</body>
+</html>

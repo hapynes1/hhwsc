@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Minimal hand-drawn love choice cover</title>
+  <desc id="desc">Two hand-drawn characters walk under the night sky, with small choice cards around them.</desc>
+  <defs>
+    <filter id="paper">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="8" />
+      <feColorMatrix type="saturate" values="0" />
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 0.07" />
+      </feComponentTransfer>
+      <feBlend mode="soft-light" in2="SourceGraphic" />
+    </filter>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="#132235" />
+  <rect width="1600" height="900" fill="#162941" filter="url(#paper)" opacity="0.65" />
+
+  <circle cx="260" cy="142" r="54" fill="#fff1b7" filter="url(#softGlow)" opacity="0.96" />
+  <path d="M280 92c-36 11-58 44-53 83 4 29 25 51 52 60-38 4-74-23-82-63-9-45 20-88 64-96 7-1 13-1 19 0z" fill="#132235" opacity="0.18" />
+
+  <g fill="#fff5b9" opacity="0.9">
+    <circle cx="516" cy="98" r="4" />
+    <circle cx="665" cy="164" r="3" />
+    <circle cx="1038" cy="112" r="4" />
+    <circle cx="1245" cy="205" r="3" />
+    <circle cx="1374" cy="130" r="5" />
+    <circle cx="1428" cy="342" r="3" />
+    <circle cx="402" cy="282" r="3" />
+    <circle cx="196" cy="326" r="4" />
+    <circle cx="875" cy="244" r="3" />
+    <circle cx="1120" cy="372" r="4" />
+  </g>
+
+  <g opacity="0.18" fill="none" stroke="#f8ecd8" stroke-width="4" stroke-linecap="round">
+    <path d="M106 662c140-70 244-75 346-35 121 47 200 35 296-44 90-74 202-92 334-39 124 50 244 33 375-56" />
+    <path d="M1096 512c62 26 116 60 164 102" stroke-dasharray="2 18" />
+  </g>
+
+  <path d="M-60 890c158-150 350-242 578-276 187-28 280-93 363-178 72-73 146-109 227-101 141 14 227 152 331 212 83 48 161 64 235 54v299z" fill="#f7f0df" />
+  <path d="M-30 866c186-118 347-172 494-163 176 11 278-50 384-155 96-94 178-128 270-96 112 39 175 153 315 201 91 31 169 29 244 8" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" opacity="0.82" />
+  <path d="M-20 840c210-100 388-139 532-116 141 23 238-23 340-115 89-80 176-126 280-91 92 31 154 119 254 158 94 36 187 39 278 11" fill="none" stroke="#c8bda5" stroke-width="4" stroke-linecap="round" opacity="0.45" />
+
+  <g transform="translate(654 368)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M42 130c-9 48-14 90-16 129" fill="none" stroke="#51463c" stroke-width="13" />
+    <path d="M96 128c-2 52 3 94 11 130" fill="none" stroke="#51463c" stroke-width="13" />
+    <path d="M28 264c18 8 35 8 53 0" fill="none" stroke="#51463c" stroke-width="12" />
+    <path d="M100 264c18 7 34 7 52 0" fill="none" stroke="#51463c" stroke-width="12" />
+    <path d="M21 70c-5 38 0 72 18 102 25 12 55 12 89 0 15-34 19-68 11-102-28-18-77-18-118 0z" fill="#dfeeff" stroke="#51463c" stroke-width="8" />
+    <path d="M56 74c20 13 47 14 74 4" fill="none" stroke="#51463c" stroke-width="7" />
+    <circle cx="78" cy="28" r="43" fill="#ffe0d2" stroke="#51463c" stroke-width="8" />
+    <path d="M38 29c4-34 22-54 55-58 34 14 49 36 45 66-37-13-70-16-100-8z" fill="#6b5746" stroke="#51463c" stroke-width="8" />
+    <circle cx="61" cy="34" r="5" fill="#51463c" />
+    <circle cx="99" cy="34" r="5" fill="#51463c" />
+    <path d="M69 58c12 9 25 9 39 0" fill="none" stroke="#51463c" stroke-width="6" />
+
+    <g transform="translate(136 8)">
+      <path d="M45 133c-6 46-12 88-20 126" fill="none" stroke="#51463c" stroke-width="13" />
+      <path d="M110 134c5 47 13 89 24 126" fill="none" stroke="#51463c" stroke-width="13" />
+      <path d="M21 263c16 9 34 9 55 0" fill="none" stroke="#51463c" stroke-width="12" />
+      <path d="M117 262c18 8 37 8 57 0" fill="none" stroke="#51463c" stroke-width="12" />
+      <path d="M20 80c-8 34-1 72 23 113 34 11 69 10 105-2 20-43 23-81 10-112-36-21-92-21-138 1z" fill="#ffd5de" stroke="#51463c" stroke-width="8" />
+      <circle cx="89" cy="30" r="44" fill="#ffe0d2" stroke="#51463c" stroke-width="8" />
+      <path d="M48 29c0-39 23-62 62-68 34 16 52 43 52 82-38-18-76-23-114-14z" fill="#f4c251" stroke="#51463c" stroke-width="8" />
+      <path d="M50 32c-14 34-19 71-16 111" fill="none" stroke="#f4c251" stroke-width="18" />
+      <path d="M155 35c19 43 24 84 16 122" fill="none" stroke="#f4c251" stroke-width="18" />
+      <circle cx="73" cy="37" r="5" fill="#51463c" />
+      <circle cx="111" cy="37" r="5" fill="#51463c" />
+      <path d="M80 61c13 8 27 8 42-1" fill="none" stroke="#51463c" stroke-width="6" />
+      <path d="M32 118c-37 10-64 25-81 44" fill="none" stroke="#51463c" stroke-width="9" />
+      <path d="M-48 161c-18-6-30-16-37-31" fill="none" stroke="#51463c" stroke-width="9" />
+    </g>
+
+    <path d="M134 126c31 18 62 18 94 0" fill="none" stroke="#51463c" stroke-width="9" />
+  </g>
+
+  <g transform="translate(114 548)">
+    <rect x="0" y="0" width="310" height="58" rx="4" fill="#f8fbff" stroke="#5a6680" stroke-width="6" />
+    <circle cx="38" cy="29" r="8" fill="#f08b9c" />
+    <path d="M68 28h178M68 40h126" stroke="#35537b" stroke-width="7" stroke-linecap="round" opacity="0.9" />
+  </g>
+  <g transform="translate(1150 588)">
+    <rect x="0" y="0" width="310" height="58" rx="4" fill="#f8fbff" stroke="#5a6680" stroke-width="6" />
+    <circle cx="38" cy="29" r="8" fill="#f08b9c" />
+    <path d="M68 28h170M68 40h142" stroke="#35537b" stroke-width="7" stroke-linecap="round" opacity="0.9" />
+  </g>
+  <g transform="translate(1098 672)">
+    <rect x="0" y="0" width="310" height="58" rx="4" fill="#f8fbff" stroke="#5a6680" stroke-width="6" />
+    <circle cx="38" cy="29" r="8" fill="#f08b9c" />
+    <path d="M68 28h184M68 40h154" stroke="#35537b" stroke-width="7" stroke-linecap="round" opacity="0.9" />
+  </g>
+</svg>
