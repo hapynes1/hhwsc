@@ -15,8 +15,12 @@ const mapPage = document.querySelector("#mapPage");
 const backHomeFromMapButton = document.querySelector("#backHomeFromMapButton");
 const mapView = document.querySelector("#mapView");
 const cityAlbumView = document.querySelector("#cityAlbumView");
+const cityRegionList = document.querySelector("#cityRegionList");
 const cityMarkerList = document.querySelector("#cityMarkerList");
-const visitedCityList = document.querySelector("#visitedCityList");
+const citySelect = document.querySelector("#citySelect");
+const addVisitedCityButton = document.querySelector("#addVisitedCityButton");
+const cityAddHint = document.querySelector("#cityAddHint");
+const cityCountLine = document.querySelector("#cityCountLine");
 const backMapButton = document.querySelector("#backMapButton");
 const cityAlbumTitle = document.querySelector("#cityAlbumTitle");
 const addCityAlbumButton = document.querySelector("#addCityAlbumButton");
@@ -57,20 +61,88 @@ const API_BASE_URL = window.CLYTZE_API_BASE_URL || "";
 const SITE_DATA_PATH = "data/site-data.json";
 const CITY_ALBUM_DB_NAME = "clytze-city-albums-v1";
 const CITY_ALBUM_STORE = "albums";
+const DEFAULT_CITY_REGION = "M-36 -18 C-14 -38 24 -36 43 -10 C50 8 28 34 -8 36 C-45 38 -58 2 -36 -18Z";
 const MAP_CITIES = [
-  { id: "beijing", name: "\u5317\u4eac", x: 56, y: 30, visited: true, note: "\u5317\u90ae\u7684\u65e5\u5e38\u5750\u6807" },
-  { id: "jinan", name: "\u6d4e\u5357", x: 57, y: 39, visited: true, note: "\u76ca\u53cb\u76f8\u8bc6\u7684\u5730\u65b9" },
-  { id: "liaocheng", name: "\u804a\u57ce", x: 53, y: 39, visited: true, note: "\u4f60\u7684\u6545\u4e61" },
-  { id: "jining", name: "\u6d4e\u5b81", x: 56, y: 43, visited: true, note: "\u5979\u7684\u6545\u4e61" },
-  { id: "shenzhen", name: "\u6df1\u5733", x: 61, y: 76, visited: true, note: "2000km \u5954\u8d74" },
-  { id: "xiamen", name: "\u53a6\u95e8", x: 66, y: 69, visited: true, note: "\u4e94\u4e00\u65c5\u884c" },
-  { id: "shanghai", name: "\u4e0a\u6d77", x: 69, y: 52, visited: false },
-  { id: "hangzhou", name: "\u676d\u5dde", x: 67, y: 57, visited: false },
-  { id: "chengdu", name: "\u6210\u90fd", x: 39, y: 58, visited: false },
-  { id: "xian", name: "\u897f\u5b89", x: 48, y: 49, visited: false },
-  { id: "qingdao", name: "\u9752\u5c9b", x: 62, y: 38, visited: false },
-  { id: "guangzhou", name: "\u5e7f\u5dde", x: 59, y: 74, visited: false }
+  { id: "beijing", name: "\u5317\u4eac", x: 56, y: 30 },
+  { id: "tianjin", name: "\u5929\u6d25", x: 58, y: 32 },
+  { id: "shijiazhuang", name: "\u77f3\u5bb6\u5e84", x: 53, y: 36 },
+  { id: "taiyuan", name: "\u592a\u539f", x: 49, y: 38 },
+  { id: "hohhot", name: "\u547c\u548c\u6d69\u7279", x: 48, y: 28 },
+  { id: "jinan", name: "\u6d4e\u5357", x: 57, y: 39 },
+  { id: "liaocheng", name: "\u804a\u57ce", x: 53, y: 39 },
+  { id: "jining", name: "\u6d4e\u5b81", x: 56, y: 43 },
+  { id: "qingdao", name: "\u9752\u5c9b", x: 62, y: 38 },
+  { id: "yantai", name: "\u70df\u53f0", x: 64, y: 34 },
+  { id: "zhengzhou", name: "\u90d1\u5dde", x: 50, y: 47 },
+  { id: "luoyang", name: "\u6d1b\u9633", x: 47, y: 48 },
+  { id: "kaifeng", name: "\u5f00\u5c01", x: 52, y: 47 },
+  { id: "xian", name: "\u897f\u5b89", x: 44, y: 51 },
+  { id: "lanzhou", name: "\u5170\u5dde", x: 36, y: 45 },
+  { id: "xining", name: "\u897f\u5b81", x: 31, y: 43 },
+  { id: "yinchuan", name: "\u94f6\u5ddd", x: 40, y: 36 },
+  { id: "urumqi", name: "\u4e4c\u9c81\u6728\u9f50", x: 18, y: 26 },
+  { id: "shanghai", name: "\u4e0a\u6d77", x: 69, y: 52 },
+  { id: "nanjing", name: "\u5357\u4eac", x: 64, y: 54 },
+  { id: "suzhou", name: "\u82cf\u5dde", x: 68, y: 53 },
+  { id: "wuxi", name: "\u65e0\u9521", x: 66, y: 53 },
+  { id: "hangzhou", name: "\u676d\u5dde", x: 67, y: 57 },
+  { id: "ningbo", name: "\u5b81\u6ce2", x: 70, y: 59 },
+  { id: "hefei", name: "\u5408\u80a5", x: 60, y: 56 },
+  { id: "huangshan", name: "\u9ec4\u5c71", x: 62, y: 61 },
+  { id: "fuzhou", name: "\u798f\u5dde", x: 67, y: 66 },
+  { id: "xiamen", name: "\u53a6\u95e8", x: 66, y: 69 },
+  { id: "nanchang", name: "\u5357\u660c", x: 57, y: 64 },
+  { id: "jingdezhen", name: "\u666f\u5fb7\u9547", x: 61, y: 62 },
+  { id: "wuhan", name: "\u6b66\u6c49", x: 53, y: 61 },
+  { id: "changsha", name: "\u957f\u6c99", x: 54, y: 68 },
+  { id: "zhangjiajie", name: "\u5f20\u5bb6\u754c", x: 49, y: 66 },
+  { id: "guangzhou", name: "\u5e7f\u5dde", x: 59, y: 74 },
+  { id: "shenzhen", name: "\u6df1\u5733", x: 61, y: 76 },
+  { id: "zhuhai", name: "\u73e0\u6d77", x: 59, y: 77 },
+  { id: "foshan", name: "\u4f5b\u5c71", x: 58, y: 74 },
+  { id: "nanning", name: "\u5357\u5b81", x: 49, y: 76 },
+  { id: "guilin", name: "\u6842\u6797", x: 51, y: 72 },
+  { id: "haikou", name: "\u6d77\u53e3", x: 55, y: 84 },
+  { id: "sanya", name: "\u4e09\u4e9a", x: 55, y: 89 },
+  { id: "chongqing", name: "\u91cd\u5e86", x: 43, y: 62 },
+  { id: "chengdu", name: "\u6210\u90fd", x: 38, y: 58 },
+  { id: "guiyang", name: "\u8d35\u9633", x: 45, y: 71 },
+  { id: "kunming", name: "\u6606\u660e", x: 39, y: 76 },
+  { id: "dali", name: "\u5927\u7406", x: 35, y: 76 },
+  { id: "lijiang", name: "\u4e3d\u6c5f", x: 34, y: 73 },
+  { id: "lhasa", name: "\u62c9\u8428", x: 25, y: 60 },
+  { id: "shenyang", name: "\u6c88\u9633", x: 67, y: 23 },
+  { id: "dalian", name: "\u5927\u8fde", x: 64, y: 30 },
+  { id: "changchun", name: "\u957f\u6625", x: 69, y: 17 },
+  { id: "harbin", name: "\u54c8\u5c14\u6ee8", x: 70, y: 11 }
 ];
+const MAP_LABEL_CITY_IDS = new Set([
+  "beijing",
+  "jinan",
+  "qingdao",
+  "xian",
+  "shanghai",
+  "nanjing",
+  "suzhou",
+  "hangzhou",
+  "huangshan",
+  "xiamen",
+  "wuhan",
+  "changsha",
+  "zhangjiajie",
+  "guangzhou",
+  "shenzhen",
+  "guilin",
+  "sanya",
+  "chongqing",
+  "chengdu",
+  "kunming",
+  "dali",
+  "lijiang",
+  "lhasa",
+  "dalian",
+  "harbin"
+]);
 const DEFAULT_MEETINGS = [
   {
     id: "default-shenzhen-2026-03-10",
@@ -95,6 +167,7 @@ let cityAlbumDbPromise = null;
 let uploadSecret = "";
 let customMeetingsCache = [];
 let cityAlbumsCache = [];
+let visitedCityIds = [];
 
 function noise(seed) {
   const value = Math.sin(seed * 918.43) * 10000;
@@ -255,6 +328,16 @@ function normalizeCityAlbum(album) {
   };
 }
 
+function normalizeVisitedCities(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const knownCityIds = new Set(MAP_CITIES.map((city) => city.id));
+
+  return Array.from(new Set(value.map(String))).filter((cityId) => knownCityIds.has(cityId));
+}
+
 function applySiteData(data) {
   if (Array.isArray(data.meetings)) {
     saveCustomMeetings(data.meetings);
@@ -264,7 +347,10 @@ function applySiteData(data) {
     cityAlbumsCache = data.cityAlbums.map(normalizeCityAlbum).filter(Boolean);
   }
 
+  visitedCityIds = normalizeVisitedCities(data.visitedCities);
+
   renderCountdowns();
+  renderCityMarkers();
 
   if (selectedCityId) {
     renderCityAlbums(selectedCityId);
@@ -637,33 +723,50 @@ function resizePhotoFile(file) {
 }
 
 function renderCityMarkers() {
-  if (!cityMarkerList || !visitedCityList) {
+  if (!cityMarkerList || !cityRegionList || !citySelect || !cityCountLine) {
     return;
   }
 
-  cityMarkerList.innerHTML = MAP_CITIES.map((city) => `
+  const visitedCities = MAP_CITIES.filter((city) => visitedCityIds.includes(city.id));
+  const unvisitedCities = MAP_CITIES.filter((city) => !visitedCityIds.includes(city.id));
+  const labelCities = MAP_CITIES.filter((city) => MAP_LABEL_CITY_IDS.has(city.id) || visitedCityIds.includes(city.id));
+  const labelsHtml = labelCities.map((city) => `
+    <span
+      class="city-map-label${visitedCityIds.includes(city.id) ? " is-visited-label" : ""}"
+      style="left: ${city.x}%; top: ${city.y}%;"
+    >${city.name}</span>
+  `).join("");
+  const markersHtml = visitedCities.map((city) => `
     <button
-      class="city-marker${city.visited ? " is-visited" : ""}"
+      class="city-marker is-visited"
       type="button"
       style="left: ${city.x}%; top: ${city.y}%;"
       data-city-id="${city.id}"
-      ${city.visited ? "" : "disabled"}
-      aria-label="${city.name}${city.visited ? "" : "\u8fd8\u6ca1\u6709\u8bb0\u5f55"}"
+      aria-label="\u8fdb\u5165${city.name}\u57ce\u5e02\u8bb0\u5fc6"
     >
       <span></span>
       <em>${city.name}</em>
     </button>
   `).join("");
 
-  visitedCityList.innerHTML = MAP_CITIES
-    .filter((city) => city.visited)
-    .map((city) => `
-      <button class="visited-city-card" type="button" data-city-id="${city.id}">
-        <strong>${city.name}</strong>
-        <span>${city.note}</span>
-      </button>
-    `)
-    .join("");
+  cityRegionList.innerHTML = visitedCities.map((city) => `
+    <svg class="city-region" viewBox="-70 -55 140 110" style="left: ${city.x}%; top: ${city.y}%;" aria-hidden="true">
+      <path d="${city.region || DEFAULT_CITY_REGION}"></path>
+    </svg>
+  `).join("");
+
+  cityMarkerList.innerHTML = labelsHtml + markersHtml;
+
+  citySelect.innerHTML = unvisitedCities.length > 0
+    ? unvisitedCities.map((city) => `<option value="${city.id}">${city.name}</option>`).join("")
+    : `<option value="">\u5df2\u7ecf\u6dfb\u52a0\u4e86\u5168\u90e8\u57ce\u5e02</option>`;
+  citySelect.disabled = unvisitedCities.length === 0;
+  addVisitedCityButton.disabled = unvisitedCities.length === 0;
+  cityCountLine.textContent = `\u5df2\u7ecf\u643a\u624b\u8d70\u8fc7 ${visitedCities.length} \u4e2a\u57ce\u5e02`;
+
+  if (visitedCities.length === 0) {
+    cityMarkerList.innerHTML = `${labelsHtml}<div class="map-empty-note">\u8fd8\u6ca1\u6709\u70b9\u4eae\u4efb\u4f55\u57ce\u5e02\uff0c\u5148\u4ece\u4e0b\u65b9\u6dfb\u52a0\u4e00\u5ea7\u5427\u3002</div>`;
+  }
 }
 
 function openMapPage() {
@@ -713,13 +816,13 @@ function renderCityAlbums(cityId) {
     return;
   }
 
-  cityAlbumTitle.textContent = `${city.name}\u76f8\u518c`;
+  cityAlbumTitle.textContent = `${city.name}\u57ce\u5e02\u8bb0\u5fc6`;
   cityAlbumGroups.innerHTML = `<div class="city-album-empty">\u6b63\u5728\u8bfb\u53d6\u7167\u7247...</div>`;
 
   getCityAlbums(cityId)
     .then((albums) => {
       if (albums.length === 0) {
-        cityAlbumGroups.innerHTML = `<div class="city-album-empty">\u8fd9\u5ea7\u57ce\u5e02\u8fd8\u6ca1\u6709\u7167\u7247\u7ec4\uff0c\u70b9\u53f3\u4e0a\u89d2 + \u6dfb\u52a0\u5427\u3002</div>`;
+        cityAlbumGroups.innerHTML = `<div class="city-album-empty">\u8fd9\u5ea7\u57ce\u5e02\u8fd8\u6ca1\u6709\u8bb0\u5fc6\u7167\u7247\uff0c\u70b9\u53f3\u4e0a\u89d2 + \u6dfb\u52a0\u5427\u3002</div>`;
         return;
       }
 
@@ -746,7 +849,7 @@ function renderCityAlbums(cityId) {
 function openCityAlbum(cityId) {
   const city = getCityById(cityId);
 
-  if (!city || !city.visited) {
+  if (!city || !visitedCityIds.includes(city.id)) {
     return;
   }
 
@@ -762,6 +865,35 @@ function backToMapView() {
   resetCityUpload();
   cityAlbumView.classList.add("is-hidden");
   mapView.classList.remove("is-hidden");
+}
+
+async function addVisitedCity() {
+  const cityId = citySelect.value;
+  const city = getCityById(cityId);
+
+  if (!city || visitedCityIds.includes(cityId)) {
+    return;
+  }
+
+  const previousVisitedCityIds = visitedCityIds.slice();
+
+  visitedCityIds = visitedCityIds.concat(cityId);
+  renderCityMarkers();
+  cityAddHint.textContent = `\u6b63\u5728\u70b9\u4eae${city.name}\uff0c\u5e76\u4fdd\u5b58\u5230 GitHub...`;
+  cityAddHint.classList.remove("is-error");
+  addVisitedCityButton.disabled = true;
+
+  try {
+    await saveToGithub("save-visited-cities", { visitedCities: visitedCityIds });
+    cityAddHint.textContent = `${city.name}\u5df2\u70b9\u4eae\uff0c\u73b0\u5728\u53ef\u4ee5\u70b9\u5b83\u8fdb\u5165\u57ce\u5e02\u8bb0\u5fc6\u3002`;
+  } catch (error) {
+    visitedCityIds = previousVisitedCityIds;
+    renderCityMarkers();
+    cityAddHint.textContent = error.message || "\u57ce\u5e02\u6dfb\u52a0\u5931\u8d25\uff0cGitHub \u6ca1\u6709\u66f4\u65b0\u3002";
+    cityAddHint.classList.add("is-error");
+  } finally {
+    addVisitedCityButton.disabled = citySelect.disabled;
+  }
 }
 
 function handleCityPhotoSelection() {
@@ -844,6 +976,36 @@ function pickParticlePhotos(targetCount) {
   });
 }
 
+function buildPhotoBackdrop(selected) {
+  const backdropPhotos = selected.filter(Boolean).slice(0, 9);
+  const layer = document.createElement("div");
+
+  layer.className = "photo-backdrop-layer";
+
+  backdropPhotos.forEach((photo, index) => {
+    const image = document.createElement("img");
+    const width = 34 + noise(index + 61) * 26;
+    const x = 8 + noise(index + 67) * 84;
+    const y = 8 + noise(index + 71) * 84;
+    const rotate = -16 + noise(index + 73) * 32;
+    const duration = 22 + noise(index + 79) * 18;
+
+    image.className = "photo-backdrop-image";
+    image.src = photo.src;
+    image.alt = "";
+    image.decoding = "async";
+    image.style.setProperty("--bg-w", `${width.toFixed(2)}vw`);
+    image.style.setProperty("--bg-x", `${x.toFixed(2)}%`);
+    image.style.setProperty("--bg-y", `${y.toFixed(2)}%`);
+    image.style.setProperty("--bg-r", `${rotate.toFixed(2)}deg`);
+    image.style.setProperty("--bg-dur", `${duration.toFixed(2)}s`);
+    image.style.setProperty("--bg-delay", `${(-duration * noise(index + 83)).toFixed(2)}s`);
+    layer.appendChild(image);
+  });
+
+  photoFlow.appendChild(layer);
+}
+
 function buildPhotoParticles() {
   if (!photoFlow || photos.length === 0 || photoFlow.children.length > 0) {
     return;
@@ -854,6 +1016,7 @@ function buildPhotoParticles() {
   const layer = document.createElement("div");
 
   photoFlow.className = "photo-flow photo-particle-flow";
+  buildPhotoBackdrop(selected);
   layer.className = "photo-particle-layer";
   photoFlow.appendChild(layer);
 
@@ -1013,14 +1176,7 @@ cityMarkerList.addEventListener("click", (event) => {
   }
 });
 
-visitedCityList.addEventListener("click", (event) => {
-  const cityButton = event.target.closest("[data-city-id]");
-
-  if (cityButton) {
-    openCityAlbum(cityButton.dataset.cityId);
-  }
-});
-
+addVisitedCityButton.addEventListener("click", addVisitedCity);
 backMapButton.addEventListener("click", backToMapView);
 addCityAlbumButton.addEventListener("click", () => {
   cityUploadPanel.classList.remove("is-hidden");

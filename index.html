@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>陈立都——王思澄</title>
-  <link rel="stylesheet" href="styles-photo-particles.css?v=9" />
+  <link rel="stylesheet" href="styles-photo-particles.css?v=12" />
 </head>
 <body>
   <main class="site-shell">
@@ -109,24 +109,61 @@
         </button>
         <div>
           <p class="countdown-kicker">OUR FOOTPRINTS</p>
-          <h1>走过的城市</h1>
+          <h1>城市记忆地图</h1>
         </div>
       </header>
 
       <div class="map-stage" id="mapView">
-        <section class="china-map-panel" aria-label="中国城市地图">
-          <svg class="china-map-shape" viewBox="0 0 720 520" role="img" aria-label="中国地图轮廓">
-            <path d="M145 162 L202 118 L286 112 L336 78 L414 98 L468 84 L558 130 L614 196 L592 278 L632 342 L552 390 L472 374 L412 442 L326 414 L268 442 L206 390 L126 360 L96 286 Z" />
-            <path class="island-mark" d="M548 430 C568 420 586 430 586 448 C568 462 546 456 548 430 Z" />
+        <section class="china-map-panel" aria-label="中国地图">
+          <svg class="china-map-shape" viewBox="0 0 720 520" role="img" aria-label="中国地图">
+            <defs>
+              <linearGradient id="chinaLandGradient" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0%" stop-color="#3f8067" />
+                <stop offset="58%" stop-color="#2e6f63" />
+                <stop offset="100%" stop-color="#214f69" />
+              </linearGradient>
+              <clipPath id="chinaLandClip">
+                <path d="M70 175 C98 132 149 128 180 106 C199 91 225 100 247 115 C269 83 310 87 339 66 C366 48 401 78 435 67 C480 58 514 95 552 105 C580 113 574 141 601 151 C645 168 661 206 631 235 C610 256 590 257 577 281 C596 292 628 305 638 333 C651 367 613 369 590 375 C565 381 546 402 520 402 C501 403 492 393 476 405 C458 419 455 445 436 454 C407 468 370 457 350 435 C332 416 305 420 285 445 C263 472 226 459 213 432 C202 410 176 415 155 403 C131 389 108 383 78 391 C47 399 30 365 56 338 C78 315 97 303 92 279 C87 258 63 245 57 221 C52 200 57 186 70 175 Z" />
+              </clipPath>
+            </defs>
+            <path class="china-land" d="M70 175 C98 132 149 128 180 106 C199 91 225 100 247 115 C269 83 310 87 339 66 C366 48 401 78 435 67 C480 58 514 95 552 105 C580 113 574 141 601 151 C645 168 661 206 631 235 C610 256 590 257 577 281 C596 292 628 305 638 333 C651 367 613 369 590 375 C565 381 546 402 520 402 C501 403 492 393 476 405 C458 419 455 445 436 454 C407 468 370 457 350 435 C332 416 305 420 285 445 C263 472 226 459 213 432 C202 410 176 415 155 403 C131 389 108 383 78 391 C47 399 30 365 56 338 C78 315 97 303 92 279 C87 258 63 245 57 221 C52 200 57 186 70 175 Z" />
+            <g class="province-layer" clip-path="url(#chinaLandClip)">
+              <path class="china-province tone-1" d="M62 162 C96 125 146 119 178 104 C204 92 229 102 247 82 C270 60 305 72 327 70 L302 151 L217 190 L177 226 L99 219 L75 259 C42 221 42 190 62 162 Z" />
+              <path class="china-province tone-2" d="M302 151 C330 83 392 65 437 62 C473 55 493 78 526 88 C564 99 570 136 602 148 L568 195 C489 171 423 157 348 152 Z" />
+              <path class="china-province tone-3" d="M568 195 L602 148 C645 164 655 207 622 238 C602 257 608 281 629 299 L573 302 L536 252 Z" />
+              <path class="china-province tone-4" d="M99 219 L177 226 L222 294 L204 352 L151 391 C123 381 90 381 67 360 C51 344 58 327 77 312 C100 297 92 278 75 259 Z" />
+              <path class="china-province tone-5" d="M177 226 L217 190 L285 209 L288 286 L222 294 Z" />
+              <path class="china-province tone-6" d="M217 190 L302 151 L348 152 L336 199 L285 209 Z" />
+              <path class="china-province tone-7" d="M336 199 L407 195 L434 249 L390 287 L337 267 Z" />
+              <path class="china-province tone-8" d="M434 249 L493 239 L536 252 L573 302 L506 319 L450 302 Z" />
+              <path class="china-province tone-9" d="M222 294 L288 286 L337 320 L304 376 L238 393 L204 352 Z" />
+              <path class="china-province tone-10" d="M337 267 L390 287 L450 302 L429 357 L371 348 L337 320 Z" />
+              <path class="china-province tone-11" d="M429 357 L480 361 L520 397 L456 435 Z" />
+              <path class="china-province tone-12" d="M304 376 L371 348 L429 357 L456 435 C440 463 397 459 371 438 C343 415 310 421 283 447 C250 480 221 429 190 421 L238 393 Z" />
+              <path class="province-line" d="M177 226 L217 190 L302 151 L348 152 L407 195 L493 239 L536 252 L573 302" />
+              <path class="province-line" d="M222 294 L288 286 L337 267 L390 287 L450 302 L506 319" />
+              <path class="province-line" d="M204 352 L238 393 L304 376 L337 320 L371 348 L429 357 L480 361" />
+              <path class="province-line" d="M75 259 L99 219 L177 226 M285 209 L336 199 M568 195 L536 252" />
+            </g>
+            <path class="china-border" d="M70 175 C98 132 149 128 180 106 C199 91 225 100 247 115 C269 83 310 87 339 66 C366 48 401 78 435 67 C480 58 514 95 552 105 C580 113 574 141 601 151 C645 168 661 206 631 235 C610 256 590 257 577 281 C596 292 628 305 638 333 C651 367 613 369 590 375 C565 381 546 402 520 402 C501 403 492 393 476 405 C458 419 455 445 436 454 C407 468 370 457 350 435 C332 416 305 420 285 445 C263 472 226 459 213 432 C202 410 176 415 155 403 C131 389 108 383 78 391 C47 399 30 365 56 338 C78 315 97 303 92 279 C87 258 63 245 57 221 C52 200 57 186 70 175 Z" />
+            <path class="coast-line" d="M631 235 C610 256 590 257 577 281 C596 292 628 305 638 333 C651 367 613 369 590 375 C565 381 546 402 520 402 C501 403 492 393 476 405 C458 419 455 445 436 454" />
+            <path class="island-mark island-hainan" d="M505 440 C524 430 545 439 545 458 C526 473 505 466 505 440 Z" />
+            <path class="island-mark island-taiwan" d="M604 398 C620 408 624 434 610 456 C595 441 591 416 604 398 Z" />
           </svg>
+          <div class="city-region-list" id="cityRegionList"></div>
           <div class="city-marker-list" id="cityMarkerList"></div>
         </section>
 
-        <aside class="city-info-panel">
-          <p class="card-label">高亮的是我们来过的地方</p>
-          <h2>点一座城市，看那里的照片</h2>
-          <div class="visited-city-list" id="visitedCityList"></div>
-        </aside>
+        <section class="map-control-panel" aria-label="添加走过的城市">
+          <p class="card-label">添加城市记忆</p>
+          <div class="city-add-row">
+            <select id="citySelect" aria-label="选择城市"></select>
+            <button id="addVisitedCityButton" type="button">添加</button>
+          </div>
+          <p id="cityAddHint">选择一座你们去过的城市，它会在地图上高亮。</p>
+        </section>
+
+        <p class="city-count-line" id="cityCountLine">已经携手走过 0 个城市</p>
       </div>
 
       <div class="city-album-view is-hidden" id="cityAlbumView">
@@ -135,7 +172,7 @@
             <button class="album-back-button" id="backMapButton" type="button">返回地图</button>
             <div>
               <p class="card-label">CITY ALBUM</p>
-              <h2 id="cityAlbumTitle">城市相册</h2>
+              <h2 id="cityAlbumTitle">城市记忆</h2>
             </div>
             <button class="album-add-button" id="addCityAlbumButton" type="button" aria-label="添加照片组">+</button>
           </div>
@@ -178,6 +215,6 @@
 
   <script src="site-config.js?v=1"></script>
   <script src="photo-data.js?v=3"></script>
-  <script src="script-photo-particles.js?v=6"></script>
+  <script src="script-photo-particles.js?v=9"></script>
 </body>
 </html>

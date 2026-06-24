@@ -58,10 +58,11 @@ async function getSiteData(env) {
 
     return {
       meetings: Array.isArray(data.meetings) ? data.meetings : [],
-      cityAlbums: Array.isArray(data.cityAlbums) ? data.cityAlbums : []
+      cityAlbums: Array.isArray(data.cityAlbums) ? data.cityAlbums : [],
+      visitedCities: Array.isArray(data.visitedCities) ? data.visitedCities : []
     };
   } catch (error) {
-    return { meetings: [], cityAlbums: [] };
+    return { meetings: [], cityAlbums: [], visitedCities: [] };
   }
 }
 
@@ -148,6 +149,21 @@ async function saveMeetings(env, payload) {
   const sha = await commitFiles(env, "更新纪念日倒计时", [
     { path: DATA_PATH, content: dataJson, encoding: "utf-8" },
     { path: MEETINGS_PATH, content: meetingsJson, encoding: "utf-8" }
+  ]);
+
+  return { ok: true, sha, data };
+}
+
+async function saveVisitedCities(env, payload) {
+  const data = await getSiteData(env);
+  const visitedCities = Array.isArray(payload.visitedCities)
+    ? Array.from(new Set(payload.visitedCities.map(String)))
+    : [];
+
+  data.visitedCities = visitedCities;
+
+  const sha = await commitFiles(env, "更新城市记忆地图", [
+    { path: DATA_PATH, content: JSON.stringify(data, null, 2), encoding: "utf-8" }
   ]);
 
   return { ok: true, sha, data };
@@ -310,6 +326,11 @@ module.exports = async function handler(req, res) {
 
     if (body.action === "save-meetings") {
       sendJson(res, 200, await saveMeetings(env, body.payload || {}));
+      return;
+    }
+
+    if (body.action === "save-visited-cities") {
+      sendJson(res, 200, await saveVisitedCities(env, body.payload || {}));
       return;
     }
 
