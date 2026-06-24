@@ -8,8 +8,26 @@ const pigPet = document.querySelector("#pigPet");
 const pigBubble = document.querySelector("#pigBubble");
 const photoFlow = document.querySelector("#photoFlow");
 const openClockButton = document.querySelector("#openClockButton");
+const openMapButton = document.querySelector("#openMapButton");
 const countdownPage = document.querySelector("#countdownPage");
 const backHomeButton = document.querySelector("#backHomeButton");
+const mapPage = document.querySelector("#mapPage");
+const backHomeFromMapButton = document.querySelector("#backHomeFromMapButton");
+const mapView = document.querySelector("#mapView");
+const cityAlbumView = document.querySelector("#cityAlbumView");
+const cityMarkerList = document.querySelector("#cityMarkerList");
+const visitedCityList = document.querySelector("#visitedCityList");
+const backMapButton = document.querySelector("#backMapButton");
+const cityAlbumTitle = document.querySelector("#cityAlbumTitle");
+const addCityAlbumButton = document.querySelector("#addCityAlbumButton");
+const cityUploadPanel = document.querySelector("#cityUploadPanel");
+const cityAlbumNameInput = document.querySelector("#cityAlbumNameInput");
+const cityPhotoInput = document.querySelector("#cityPhotoInput");
+const chooseCityPhotosButton = document.querySelector("#chooseCityPhotosButton");
+const saveCityAlbumButton = document.querySelector("#saveCityAlbumButton");
+const cancelCityAlbumButton = document.querySelector("#cancelCityAlbumButton");
+const cityUploadHint = document.querySelector("#cityUploadHint");
+const cityAlbumGroups = document.querySelector("#cityAlbumGroups");
 const loveDaysNumber = document.querySelector("#loveDaysNumber");
 const loveDaysDetail = document.querySelector("#loveDaysDetail");
 const nextMeetingTitle = document.querySelector("#nextMeetingTitle");
@@ -35,6 +53,24 @@ const pigMessages = [
 const DAY_MS = 24 * 60 * 60 * 1000;
 const LOVE_START = new Date(2026, 1, 23, 0, 0, 0);
 const MEETING_STORAGE_KEY = "clytze-meetings-v1";
+const API_BASE_URL = window.CLYTZE_API_BASE_URL || "";
+const SITE_DATA_PATH = "data/site-data.json";
+const CITY_ALBUM_DB_NAME = "clytze-city-albums-v1";
+const CITY_ALBUM_STORE = "albums";
+const MAP_CITIES = [
+  { id: "beijing", name: "\u5317\u4eac", x: 56, y: 30, visited: true, note: "\u5317\u90ae\u7684\u65e5\u5e38\u5750\u6807" },
+  { id: "jinan", name: "\u6d4e\u5357", x: 57, y: 39, visited: true, note: "\u76ca\u53cb\u76f8\u8bc6\u7684\u5730\u65b9" },
+  { id: "liaocheng", name: "\u804a\u57ce", x: 53, y: 39, visited: true, note: "\u4f60\u7684\u6545\u4e61" },
+  { id: "jining", name: "\u6d4e\u5b81", x: 56, y: 43, visited: true, note: "\u5979\u7684\u6545\u4e61" },
+  { id: "shenzhen", name: "\u6df1\u5733", x: 61, y: 76, visited: true, note: "2000km \u5954\u8d74" },
+  { id: "xiamen", name: "\u53a6\u95e8", x: 66, y: 69, visited: true, note: "\u4e94\u4e00\u65c5\u884c" },
+  { id: "shanghai", name: "\u4e0a\u6d77", x: 69, y: 52, visited: false },
+  { id: "hangzhou", name: "\u676d\u5dde", x: 67, y: 57, visited: false },
+  { id: "chengdu", name: "\u6210\u90fd", x: 39, y: 58, visited: false },
+  { id: "xian", name: "\u897f\u5b89", x: 48, y: 49, visited: false },
+  { id: "qingdao", name: "\u9752\u5c9b", x: 62, y: 38, visited: false },
+  { id: "guangzhou", name: "\u5e7f\u5dde", x: 59, y: 74, visited: false }
+];
 const DEFAULT_MEETINGS = [
   {
     id: "default-shenzhen-2026-03-10",
@@ -53,6 +89,12 @@ const DEFAULT_MEETINGS = [
 let unlocked = false;
 let pigMessageIndex = 0;
 let editingMeetingId = null;
+let selectedCityId = null;
+let selectedCityFiles = [];
+let cityAlbumDbPromise = null;
+let uploadSecret = "";
+let customMeetingsCache = [];
+let cityAlbumsCache = [];
 
 function noise(seed) {
   const value = Math.sin(seed * 918.43) * 10000;
@@ -114,7 +156,22 @@ function isDefaultMeeting(id) {
   return DEFAULT_MEETINGS.some((meeting) => meeting.id === id);
 }
 
-function loadCustomMeetings() {
+function normalizeMeeting(meeting) {
+  const timestamp = Number(meeting.timestamp);
+
+  if (!Number.isFinite(timestamp)) {
+    return null;
+  }
+
+  return {
+    id: typeof meeting.id === "string" ? meeting.id : `meeting-${timestamp}`,
+    name: String(meeting.name || "\u4e00\u6b21\u89c1\u9762").trim().slice(0, 18),
+    timestamp,
+    fixed: isDefaultMeeting(meeting.id)
+  };
+}
+
+function loadLocalMeetings() {
   try {
     const saved = JSON.parse(localStorage.getItem(MEETING_STORAGE_KEY) || "[]");
 
@@ -122,33 +179,109 @@ function loadCustomMeetings() {
       return [];
     }
 
-    return saved
-      .map((meeting) => {
-        const timestamp = Number(meeting.timestamp);
-
-        if (!Number.isFinite(timestamp)) {
-          return null;
-        }
-
-        return {
-          id: typeof meeting.id === "string" ? meeting.id : `meeting-${timestamp}`,
-          name: String(meeting.name || "\u4e00\u6b21\u89c1\u9762").trim().slice(0, 18),
-          timestamp,
-          fixed: isDefaultMeeting(meeting.id)
-        };
-      })
-      .filter(Boolean);
+    return saved.map(normalizeMeeting).filter(Boolean);
   } catch (error) {
     return [];
   }
 }
 
+function loadCustomMeetings() {
+  return customMeetingsCache;
+}
+
 function saveCustomMeetings(meetings) {
+  customMeetingsCache = meetings.map(normalizeMeeting).filter(Boolean);
+
   try {
-    localStorage.setItem(MEETING_STORAGE_KEY, JSON.stringify(meetings));
+    localStorage.setItem(MEETING_STORAGE_KEY, JSON.stringify(customMeetingsCache));
     return true;
   } catch (error) {
     return false;
+  }
+}
+
+function getBackendUrl() {
+  const base = API_BASE_URL.replace(/\/$/, "");
+
+  return `${base}/api/github-save`;
+}
+
+async function saveToGithub(action, payload) {
+  if (!uploadSecret) {
+    throw new Error("\u8fd8\u6ca1\u6709\u89e3\u9501\uff0c\u4e0d\u80fd\u4fdd\u5b58\u5230 GitHub\u3002");
+  }
+
+  const response = await fetch(getBackendUrl(), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      secret: uploadSecret,
+      action,
+      payload
+    })
+  });
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok || !result.ok) {
+    throw new Error(result.message || "\u4fdd\u5b58\u5230 GitHub \u5931\u8d25\u3002");
+  }
+
+  if (result.data) {
+    applySiteData(result.data);
+  }
+
+  return result;
+}
+
+function normalizeCityAlbum(album) {
+  if (!album || !album.cityId || !Array.isArray(album.photos)) {
+    return null;
+  }
+
+  return {
+    id: String(album.id || `album-${Date.now()}`),
+    cityId: String(album.cityId),
+    cityName: String(album.cityName || ""),
+    title: String(album.title || "\u4e00\u7ec4\u7167\u7247").slice(0, 40),
+    createdAt: Number(album.createdAt) || Date.now(),
+    photos: album.photos
+      .filter((photo) => photo && photo.src)
+      .map((photo) => ({
+        name: String(photo.name || ""),
+        src: String(photo.src)
+      }))
+  };
+}
+
+function applySiteData(data) {
+  if (Array.isArray(data.meetings)) {
+    saveCustomMeetings(data.meetings);
+  }
+
+  if (Array.isArray(data.cityAlbums)) {
+    cityAlbumsCache = data.cityAlbums.map(normalizeCityAlbum).filter(Boolean);
+  }
+
+  renderCountdowns();
+
+  if (selectedCityId) {
+    renderCityAlbums(selectedCityId);
+  }
+}
+
+async function loadSiteData() {
+  try {
+    const response = await fetch(`${SITE_DATA_PATH}?v=${Date.now()}`, { cache: "no-store" });
+
+    if (!response.ok) {
+      return;
+    }
+
+    applySiteData(await response.json());
+  } catch (error) {
+    customMeetingsCache = loadLocalMeetings();
   }
 }
 
@@ -318,7 +451,7 @@ function startEditingMeeting(id) {
   meetingNameInput.focus({ preventScroll: true });
 }
 
-function addMeeting() {
+async function addMeeting() {
   if (!meetingDateInput || !addMeetingButton) {
     return;
   }
@@ -331,6 +464,7 @@ function addMeeting() {
   }
 
   const name = (meetingNameInput.value || "").trim() || "\u4e0b\u4e00\u6b21\u89c1\u9762";
+  const previousMeetings = loadCustomMeetings().map((meeting) => ({ ...meeting }));
   const customMeetings = loadCustomMeetings();
   const nextMeeting = {
     id: editingMeetingId || `meeting-${Date.now()}`,
@@ -348,24 +482,45 @@ function addMeeting() {
   }
 
   const wasEditing = Boolean(editingMeetingId);
-  resetMeetingEditor(true);
-  showAddHint(wasEditing
-    ? "\u5df2\u7ecf\u4fdd\u5b58\u8fd9\u6761\u89c1\u9762\u7684\u66f4\u6539\u3002"
-    : (timestamp > Date.now()
-      ? "\u5df2\u7ecf\u52a0\u5165\u4e0b\u6b21\u89c1\u9762\u5012\u8ba1\u65f6\u3002"
-      : "\u5df2\u7ecf\u52a0\u5165\u89c1\u9762\u8bb0\u5f55\u3002"));
-  renderCountdowns();
+  addMeetingButton.disabled = true;
+  showAddHint("\u6b63\u5728\u4fdd\u5b58\u5230 GitHub...");
+
+  try {
+    await saveToGithub("save-meetings", { meetings: loadCustomMeetings() });
+    resetMeetingEditor(true);
+    showAddHint(wasEditing
+      ? "\u5df2\u4fdd\u5b58\u5230 GitHub\uff0c\u8fd9\u6761\u89c1\u9762\u5df2\u66f4\u65b0\u3002"
+      : (timestamp > Date.now()
+        ? "\u5df2\u4fdd\u5b58\u5230 GitHub\uff0c\u5e76\u52a0\u5165\u4e0b\u6b21\u89c1\u9762\u5012\u8ba1\u65f6\u3002"
+        : "\u5df2\u4fdd\u5b58\u5230 GitHub\uff0c\u5e76\u52a0\u5165\u89c1\u9762\u8bb0\u5f55\u3002"));
+  } catch (error) {
+    saveCustomMeetings(previousMeetings);
+    showAddHint(error.message || "\u4fdd\u5b58\u5230 GitHub \u5931\u8d25\u3002", true);
+  } finally {
+    addMeetingButton.disabled = false;
+    renderCountdowns();
+  }
 }
 
-function deleteMeeting(id) {
+async function deleteMeeting(id) {
+  const previousMeetings = loadCustomMeetings().map((meeting) => ({ ...meeting }));
   const nextMeetings = loadCustomMeetings().filter((meeting) => meeting.id !== id);
 
   saveCustomMeetings(nextMeetings);
   if (editingMeetingId === id) {
     resetMeetingEditor(true);
   }
-  showAddHint("\u5df2\u5220\u9664\u8fd9\u6761\u81ea\u5df1\u6dfb\u52a0\u7684\u89c1\u9762\u3002");
-  renderCountdowns();
+  showAddHint("\u6b63\u5728\u4ece GitHub \u66f4\u65b0\u8fd9\u6761\u8bb0\u5f55...");
+
+  try {
+    await saveToGithub("save-meetings", { meetings: loadCustomMeetings() });
+    showAddHint("\u5df2\u4ece GitHub \u66f4\u65b0\u8fd9\u6761\u8bb0\u5f55\u3002");
+  } catch (error) {
+    saveCustomMeetings(previousMeetings);
+    showAddHint(error.message || "\u5220\u9664\u5931\u8d25\uff0cGitHub \u6ca1\u6709\u66f4\u65b0\u3002", true);
+  } finally {
+    renderCountdowns();
+  }
 }
 
 function openCountdownPage() {
@@ -395,6 +550,273 @@ function closeCountdownPage() {
       countdownPage.classList.add("is-hidden");
     }
   }, 560);
+}
+
+function getCityById(id) {
+  return MAP_CITIES.find((city) => city.id === id);
+}
+
+function openCityAlbumDb() {
+  if (cityAlbumDbPromise) {
+    return cityAlbumDbPromise;
+  }
+
+  cityAlbumDbPromise = new Promise((resolve, reject) => {
+    const request = indexedDB.open(CITY_ALBUM_DB_NAME, 1);
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+
+      if (!db.objectStoreNames.contains(CITY_ALBUM_STORE)) {
+        db.createObjectStore(CITY_ALBUM_STORE, { keyPath: "id" });
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+
+  return cityAlbumDbPromise;
+}
+
+function getCityAlbums(cityId) {
+  return Promise.resolve(cityAlbumsCache
+    .filter((album) => album.cityId === cityId)
+    .sort((a, b) => b.createdAt - a.createdAt));
+}
+
+function saveCityAlbum(album) {
+  return openCityAlbumDb().then((db) => new Promise((resolve, reject) => {
+    const transaction = db.transaction(CITY_ALBUM_STORE, "readwrite");
+    const store = transaction.objectStore(CITY_ALBUM_STORE);
+    const request = store.put(album);
+
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  }));
+}
+
+function deleteCityAlbum(albumId) {
+  return saveToGithub("delete-city-album", { albumId });
+}
+
+function resizePhotoFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const image = new Image();
+
+      image.onload = () => {
+        const maxSize = 1400;
+        const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+        const width = Math.max(1, Math.round(image.width * scale));
+        const height = Math.max(1, Math.round(image.height * scale));
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+
+        canvas.width = width;
+        canvas.height = height;
+        context.drawImage(image, 0, 0, width, height);
+        resolve({
+          name: file.name,
+          src: canvas.toDataURL("image/jpeg", 0.84)
+        });
+      };
+
+      image.onerror = () => resolve({
+        name: file.name,
+        src: reader.result
+      });
+      image.src = reader.result;
+    };
+
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderCityMarkers() {
+  if (!cityMarkerList || !visitedCityList) {
+    return;
+  }
+
+  cityMarkerList.innerHTML = MAP_CITIES.map((city) => `
+    <button
+      class="city-marker${city.visited ? " is-visited" : ""}"
+      type="button"
+      style="left: ${city.x}%; top: ${city.y}%;"
+      data-city-id="${city.id}"
+      ${city.visited ? "" : "disabled"}
+      aria-label="${city.name}${city.visited ? "" : "\u8fd8\u6ca1\u6709\u8bb0\u5f55"}"
+    >
+      <span></span>
+      <em>${city.name}</em>
+    </button>
+  `).join("");
+
+  visitedCityList.innerHTML = MAP_CITIES
+    .filter((city) => city.visited)
+    .map((city) => `
+      <button class="visited-city-card" type="button" data-city-id="${city.id}">
+        <strong>${city.name}</strong>
+        <span>${city.note}</span>
+      </button>
+    `)
+    .join("");
+}
+
+function openMapPage() {
+  if (!mapPage || mapPage.classList.contains("is-active")) {
+    return;
+  }
+
+  renderCityMarkers();
+  mapPage.classList.remove("is-hidden");
+  mapView.classList.remove("is-hidden");
+  cityAlbumView.classList.add("is-hidden");
+  storyPage.classList.add("is-shifted");
+  document.body.classList.add("map-open");
+  window.requestAnimationFrame(() => {
+    mapPage.classList.add("is-active");
+  });
+}
+
+function closeMapPage() {
+  if (!mapPage || !mapPage.classList.contains("is-active")) {
+    return;
+  }
+
+  mapPage.classList.remove("is-active");
+  storyPage.classList.remove("is-shifted");
+  document.body.classList.remove("map-open");
+  window.setTimeout(() => {
+    if (!mapPage.classList.contains("is-active")) {
+      mapPage.classList.add("is-hidden");
+    }
+  }, 560);
+}
+
+function resetCityUpload() {
+  selectedCityFiles = [];
+  cityAlbumNameInput.value = "";
+  cityPhotoInput.value = "";
+  cityUploadHint.textContent = "\u5148\u9009\u62e9\u7167\u7247\uff0c\u518d\u7ed9\u8fd9\u4e00\u7ec4\u8d77\u540d\u5b57\u3002";
+  cityUploadHint.classList.remove("is-error");
+  cityUploadPanel.classList.add("is-hidden");
+}
+
+function renderCityAlbums(cityId) {
+  const city = getCityById(cityId);
+
+  if (!city) {
+    return;
+  }
+
+  cityAlbumTitle.textContent = `${city.name}\u76f8\u518c`;
+  cityAlbumGroups.innerHTML = `<div class="city-album-empty">\u6b63\u5728\u8bfb\u53d6\u7167\u7247...</div>`;
+
+  getCityAlbums(cityId)
+    .then((albums) => {
+      if (albums.length === 0) {
+        cityAlbumGroups.innerHTML = `<div class="city-album-empty">\u8fd9\u5ea7\u57ce\u5e02\u8fd8\u6ca1\u6709\u7167\u7247\u7ec4\uff0c\u70b9\u53f3\u4e0a\u89d2 + \u6dfb\u52a0\u5427\u3002</div>`;
+        return;
+      }
+
+      cityAlbumGroups.innerHTML = albums.map((album) => `
+        <article class="city-album-group">
+          <div class="city-album-group-head">
+            <div>
+              <p class="card-label">${new Date(album.createdAt).toLocaleDateString("zh-CN")}</p>
+              <h3>${escapeHtml(album.title)}</h3>
+            </div>
+            <button class="city-album-delete" type="button" data-delete-album="${album.id}">\u5220\u9664</button>
+          </div>
+          <div class="city-photo-grid">
+            ${album.photos.map((photo) => `<img src="${photo.src}" alt="${escapeHtml(photo.name || album.title)}" loading="lazy" />`).join("")}
+          </div>
+        </article>
+      `).join("");
+    })
+    .catch(() => {
+      cityAlbumGroups.innerHTML = `<div class="city-album-empty">\u8fd9\u4e2a\u6d4f\u89c8\u5668\u6682\u65f6\u8bfb\u4e0d\u5230\u672c\u5730\u76f8\u518c\u3002</div>`;
+    });
+}
+
+function openCityAlbum(cityId) {
+  const city = getCityById(cityId);
+
+  if (!city || !city.visited) {
+    return;
+  }
+
+  selectedCityId = city.id;
+  resetCityUpload();
+  mapView.classList.add("is-hidden");
+  cityAlbumView.classList.remove("is-hidden");
+  renderCityAlbums(city.id);
+}
+
+function backToMapView() {
+  selectedCityId = null;
+  resetCityUpload();
+  cityAlbumView.classList.add("is-hidden");
+  mapView.classList.remove("is-hidden");
+}
+
+function handleCityPhotoSelection() {
+  selectedCityFiles = Array.from(cityPhotoInput.files || []).filter((file) => file.type.startsWith("image/"));
+
+  if (selectedCityFiles.length === 0) {
+    cityUploadHint.textContent = "\u6ca1\u6709\u9009\u5230\u56fe\u7247\uff0c\u8bf7\u91cd\u65b0\u9009\u4e00\u6b21\u3002";
+    cityUploadHint.classList.add("is-error");
+    return;
+  }
+
+  cityUploadHint.textContent = `\u5df2\u9009\u62e9 ${selectedCityFiles.length} \u5f20\u7167\u7247\uff0c\u7ed9\u5b83\u4eec\u8d77\u4e2a\u540d\u5b57\u540e\u4fdd\u5b58\u3002`;
+  cityUploadHint.classList.remove("is-error");
+}
+
+async function saveSelectedCityAlbum() {
+  if (!selectedCityId) {
+    return;
+  }
+
+  if (selectedCityFiles.length === 0) {
+    cityUploadHint.textContent = "\u5148\u9009\u62e9\u8981\u653e\u8fdb\u8fd9\u5ea7\u57ce\u5e02\u7684\u7167\u7247\u3002";
+    cityUploadHint.classList.add("is-error");
+    return;
+  }
+
+  const city = getCityById(selectedCityId);
+  const title = (cityAlbumNameInput.value || "").trim() || `${city.name}\u7684\u4e00\u7ec4\u7167\u7247`;
+
+  saveCityAlbumButton.disabled = true;
+  cityUploadHint.textContent = "\u6b63\u5728\u538b\u7f29\u7167\u7247\u5e76\u4fdd\u5b58\u5230 GitHub...";
+  cityUploadHint.classList.remove("is-error");
+
+  try {
+    const photosForAlbum = [];
+
+    for (const file of selectedCityFiles) {
+      photosForAlbum.push(await resizePhotoFile(file));
+    }
+
+    await saveToGithub("add-city-album", {
+      cityId: selectedCityId,
+      cityName: city.name,
+      title: title.slice(0, 22),
+      photos: photosForAlbum
+    });
+
+    resetCityUpload();
+    renderCityAlbums(selectedCityId);
+  } catch (error) {
+    cityUploadHint.textContent = error.message || "\u4fdd\u5b58\u5230 GitHub \u5931\u8d25\u4e86\uff0c\u53ef\u80fd\u662f\u7167\u7247\u592a\u591a\u6216\u540e\u7aef\u8fd8\u6ca1\u914d\u597d\u3002";
+    cityUploadHint.classList.add("is-error");
+  } finally {
+    saveCityAlbumButton.disabled = false;
+  }
 }
 
 function getParticleTargetCount() {
@@ -504,6 +926,7 @@ function checkPassword() {
   }
 
   if (passwordInput.value === PASSWORD) {
+    uploadSecret = passwordInput.value;
     openPhotoPage();
     return;
   }
@@ -543,11 +966,16 @@ passwordInput.addEventListener("input", () => {
   checkPassword();
 });
 
+customMeetingsCache = loadLocalMeetings();
 renderCountdowns();
+renderCityMarkers();
+loadSiteData();
 window.setInterval(renderCountdowns, 1000);
 
 openClockButton.addEventListener("click", openCountdownPage);
 backHomeButton.addEventListener("click", closeCountdownPage);
+openMapButton.addEventListener("click", openMapPage);
+backHomeFromMapButton.addEventListener("click", closeMapPage);
 addMeetingButton.addEventListener("click", addMeeting);
 cancelEditButton.addEventListener("click", () => {
   resetMeetingEditor(true);
@@ -577,9 +1005,66 @@ countdownPage.addEventListener("click", (event) => {
   }
 });
 
+cityMarkerList.addEventListener("click", (event) => {
+  const cityButton = event.target.closest("[data-city-id]");
+
+  if (cityButton && !cityButton.disabled) {
+    openCityAlbum(cityButton.dataset.cityId);
+  }
+});
+
+visitedCityList.addEventListener("click", (event) => {
+  const cityButton = event.target.closest("[data-city-id]");
+
+  if (cityButton) {
+    openCityAlbum(cityButton.dataset.cityId);
+  }
+});
+
+backMapButton.addEventListener("click", backToMapView);
+addCityAlbumButton.addEventListener("click", () => {
+  cityUploadPanel.classList.remove("is-hidden");
+  cityAlbumNameInput.focus({ preventScroll: true });
+});
+chooseCityPhotosButton.addEventListener("click", () => {
+  cityPhotoInput.click();
+});
+cityPhotoInput.addEventListener("change", handleCityPhotoSelection);
+saveCityAlbumButton.addEventListener("click", saveSelectedCityAlbum);
+cancelCityAlbumButton.addEventListener("click", resetCityUpload);
+cityAlbumNameInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    saveSelectedCityAlbum();
+  }
+});
+cityAlbumGroups.addEventListener("click", (event) => {
+  const deleteButton = event.target.closest("[data-delete-album]");
+
+  if (!deleteButton || !selectedCityId) {
+    return;
+  }
+
+  deleteCityAlbum(deleteButton.dataset.deleteAlbum)
+    .then(() => renderCityAlbums(selectedCityId))
+    .catch((error) => {
+      cityAlbumGroups.insertAdjacentHTML("afterbegin", `<div class="city-album-empty">${escapeHtml(error.message || "\u5220\u9664\u5931\u8d25\uff0cGitHub \u6ca1\u6709\u66f4\u65b0\u3002")}</div>`);
+    });
+});
+
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && document.body.classList.contains("clock-open")) {
     closeCountdownPage();
+    return;
+  }
+
+  if (event.key === "Escape" && document.body.classList.contains("map-open")) {
+    if (!cityAlbumView.classList.contains("is-hidden")) {
+      backToMapView();
+      return;
+    }
+
+    closeMapPage();
   }
 });
 

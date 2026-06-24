@@ -42,6 +42,7 @@ input {
 .lock-screen,
 .story-page,
 .countdown-page,
+.map-page,
 .showcase {
   width: 100vw;
   height: 100vh;
@@ -274,6 +275,7 @@ input {
   top: clamp(18px, 3vw, 34px);
   z-index: 42;
   display: flex;
+  gap: 10px;
 }
 
 .home-action-button,
@@ -332,6 +334,34 @@ input {
   transform: translate(-50%, -100%) rotate(122deg);
 }
 
+.map-icon {
+  position: relative;
+  width: 27px;
+  height: 24px;
+  border: 2px solid currentColor;
+  border-radius: 6px;
+  transform: skewY(-5deg);
+}
+
+.map-icon::before,
+.map-icon::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: currentColor;
+  opacity: 0.72;
+}
+
+.map-icon::before {
+  left: 8px;
+}
+
+.map-icon::after {
+  right: 8px;
+}
+
 .countdown-page {
   position: fixed;
   inset: 0;
@@ -351,6 +381,369 @@ input {
   opacity: 1;
   pointer-events: auto;
   transform: translateX(0);
+}
+
+.map-page {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  overflow: hidden;
+  color: var(--cream);
+  background: #101827;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(100%);
+  transition:
+    transform 560ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 420ms ease;
+}
+
+.map-page.is-active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+.map-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 20% 18%, rgba(255, 194, 206, 0.16), transparent 24rem),
+    radial-gradient(circle at 86% 72%, rgba(191, 231, 228, 0.14), transparent 26rem),
+    linear-gradient(135deg, #111827, #151b28 58%, #0e1522);
+}
+
+.map-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 248, 242, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 248, 242, 0.035) 1px, transparent 1px);
+  background-size: 54px 54px;
+  mask-image: radial-gradient(circle at 50% 52%, black, transparent 78%);
+}
+
+.map-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 96px;
+  padding: 24px clamp(20px, 5vw, 64px) 12px;
+}
+
+.map-header h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 3vw, 2.5rem);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+.map-stage,
+.city-album-view {
+  position: relative;
+  z-index: 1;
+  height: calc(100vh - 96px);
+  padding: 0 clamp(20px, 5vw, 64px) 30px;
+}
+
+.map-stage {
+  display: grid;
+  grid-template-columns: minmax(360px, 1.35fr) minmax(260px, 0.65fr);
+  gap: 18px;
+}
+
+.china-map-panel,
+.city-info-panel,
+.city-album-panel {
+  border: 1px solid rgba(255, 248, 242, 0.16);
+  border-radius: 8px;
+  background: rgba(15, 20, 28, 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 22px 58px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(12px) saturate(1.04);
+}
+
+.china-map-panel {
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.china-map-shape {
+  position: absolute;
+  inset: 4% 4% 3%;
+  width: 92%;
+  height: 93%;
+  filter: drop-shadow(0 24px 44px rgba(0, 0, 0, 0.24));
+}
+
+.china-map-shape path {
+  fill: rgba(255, 248, 242, 0.1);
+  stroke: rgba(255, 248, 242, 0.3);
+  stroke-width: 3;
+}
+
+.china-map-shape .island-mark {
+  fill: rgba(255, 248, 242, 0.08);
+  stroke-width: 2;
+}
+
+.city-marker-list {
+  position: absolute;
+  inset: 0;
+}
+
+.city-marker {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 0;
+  height: 0;
+  padding: 0;
+  border: 0;
+  color: rgba(255, 248, 242, 0.46);
+  background: transparent;
+  transform: translate(-50%, -50%);
+}
+
+.city-marker span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 5px rgba(255, 248, 242, 0.06);
+}
+
+.city-marker em {
+  position: absolute;
+  left: 12px;
+  top: -10px;
+  font-style: normal;
+  font-size: 0.76rem;
+  white-space: nowrap;
+  opacity: 0.68;
+}
+
+.city-marker.is-visited {
+  color: #ffd4de;
+  cursor: pointer;
+}
+
+.city-marker.is-visited span {
+  width: 13px;
+  height: 13px;
+  background: #ffc2ce;
+  box-shadow:
+    0 0 0 7px rgba(255, 194, 206, 0.16),
+    0 0 28px rgba(255, 194, 206, 0.72);
+  animation: cityPulse 2.4s ease-in-out infinite;
+}
+
+.city-marker.is-visited em {
+  color: var(--cream);
+  opacity: 0.94;
+  text-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+}
+
+.city-info-panel {
+  min-height: 0;
+  padding: clamp(18px, 3vw, 26px);
+}
+
+.city-info-panel h2 {
+  margin: 12px 0 18px;
+  font-size: clamp(1.3rem, 3vw, 2rem);
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.visited-city-list {
+  display: grid;
+  gap: 10px;
+  max-height: calc(100vh - 220px);
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.visited-city-card {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid rgba(255, 248, 242, 0.14);
+  border-radius: 8px;
+  color: var(--cream);
+  text-align: left;
+  background: rgba(255, 248, 242, 0.07);
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.visited-city-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 248, 242, 0.34);
+  background: rgba(255, 248, 242, 0.12);
+}
+
+.visited-city-card strong,
+.visited-city-card span {
+  display: block;
+}
+
+.visited-city-card strong {
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.visited-city-card span {
+  margin-top: 4px;
+  color: rgba(255, 248, 242, 0.56);
+  font-size: 0.84rem;
+}
+
+.city-album-panel {
+  height: 100%;
+  min-height: 0;
+  padding: clamp(18px, 3vw, 26px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.city-album-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.city-album-head h2 {
+  margin: 0;
+  font-size: clamp(1.45rem, 3vw, 2.3rem);
+  font-weight: 500;
+}
+
+.album-back-button,
+.album-add-button,
+.choose-city-photos,
+.save-city-album,
+.cancel-city-album,
+.city-album-delete {
+  border: 1px solid rgba(255, 248, 242, 0.18);
+  border-radius: 999px;
+  color: rgba(255, 248, 242, 0.84);
+  background: rgba(255, 248, 242, 0.08);
+  cursor: pointer;
+}
+
+.album-back-button,
+.choose-city-photos,
+.save-city-album,
+.cancel-city-album,
+.city-album-delete {
+  padding: 8px 12px;
+}
+
+.album-add-button {
+  width: 46px;
+  height: 46px;
+  font-size: 1.8rem;
+  line-height: 1;
+  color: #101827;
+  background: rgba(255, 248, 242, 0.9);
+}
+
+.city-upload-panel {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto auto auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid rgba(255, 248, 242, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 248, 242, 0.06);
+}
+
+.city-upload-panel input[type="text"] {
+  min-width: 0;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 248, 242, 0.18);
+  border-radius: 8px;
+  outline: none;
+  color: var(--cream);
+  background: rgba(12, 17, 24, 0.32);
+}
+
+.city-upload-panel p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: rgba(255, 248, 242, 0.54);
+  font-size: 0.86rem;
+}
+
+.city-upload-panel p.is-error {
+  color: #ffd8dd;
+}
+
+.city-album-groups {
+  display: grid;
+  gap: 14px;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.city-album-group {
+  border: 1px solid rgba(255, 248, 242, 0.12);
+  border-radius: 8px;
+  padding: 14px;
+  background: rgba(255, 248, 242, 0.065);
+}
+
+.city-album-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.city-album-group h3 {
+  margin: 4px 0 0;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.city-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.city-photo-grid img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 6px;
+  background: rgba(255, 248, 242, 0.08);
+}
+
+.city-album-empty {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  border: 1px dashed rgba(255, 248, 242, 0.16);
+  border-radius: 8px;
+  color: rgba(255, 248, 242, 0.54);
+  text-align: center;
+  padding: 20px;
 }
 
 .countdown-bg {
@@ -723,7 +1116,9 @@ input {
 }
 
 body.clock-open .pig-pet,
-body.clock-open .home-actions {
+body.clock-open .home-actions,
+body.map-open .pig-pet,
+body.map-open .home-actions {
   display: none;
 }
 
@@ -748,6 +1143,17 @@ body.clock-open .home-actions {
       translate(-50%, -50%)
       rotate(calc(var(--r) * 0.7))
       scale(calc(var(--s) * 0.94));
+  }
+}
+
+@keyframes cityPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.28);
+    opacity: 0.78;
   }
 }
 
@@ -1036,6 +1442,11 @@ body.story-open .pig-pet {
     padding-inline: 18px;
   }
 
+  .map-header {
+    height: 86px;
+    padding-inline: 18px;
+  }
+
   .route-mark {
     gap: 8px;
     padding: 8px 11px;
@@ -1053,6 +1464,34 @@ body.story-open .pig-pet {
     height: calc(100vh - 86px);
     padding: 0 18px 20px;
     overflow: auto;
+  }
+
+  .map-stage,
+  .city-album-view {
+    height: calc(100vh - 86px);
+    padding: 0 18px 20px;
+  }
+
+  .map-stage {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+  }
+
+  .china-map-panel {
+    min-height: 430px;
+  }
+
+  .city-info-panel {
+    min-height: 260px;
+  }
+
+  .city-upload-panel {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .city-upload-panel input[type="text"] {
+    grid-column: 1 / -1;
   }
 
   .meeting-panel {
@@ -1081,6 +1520,10 @@ body.story-open .pig-pet {
     font-size: 1.45rem;
   }
 
+  .map-header h1 {
+    font-size: 1.45rem;
+  }
+
   .route-mark {
     position: absolute;
     right: 18px;
@@ -1095,6 +1538,23 @@ body.story-open .pig-pet {
   .upcoming-item {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .city-album-head {
+    grid-template-columns: 1fr auto;
+  }
+
+  .album-back-button {
+    grid-column: 1 / -1;
+    width: max-content;
+  }
+
+  .city-upload-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .city-photo-grid {
+    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
   }
 
   .add-grid {

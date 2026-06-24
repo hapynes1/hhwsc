@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>陈立都——王思澄</title>
-  <link rel="stylesheet" href="styles-photo-particles.css?v=8" />
+  <link rel="stylesheet" href="styles-photo-particles.css?v=9" />
 </head>
 <body>
   <main class="site-shell">
@@ -32,6 +32,10 @@
         <button class="home-action-button" id="openClockButton" type="button" aria-label="纪念日时钟">
           <span class="clock-icon" aria-hidden="true"></span>
           <span class="sr-only">纪念日时钟</span>
+        </button>
+        <button class="home-action-button" id="openMapButton" type="button" aria-label="城市地图">
+          <span class="map-icon" aria-hidden="true"></span>
+          <span class="sr-only">城市地图</span>
         </button>
       </div>
     </section>
@@ -96,6 +100,59 @@
         </section>
       </div>
     </section>
+
+    <section class="map-page is-hidden" id="mapPage" aria-label="城市地图页面">
+      <div class="map-bg"></div>
+      <header class="map-header">
+        <button class="back-button" id="backHomeFromMapButton" type="button" aria-label="回到照片主页">
+          <span class="back-arrow" aria-hidden="true"></span>
+        </button>
+        <div>
+          <p class="countdown-kicker">OUR FOOTPRINTS</p>
+          <h1>走过的城市</h1>
+        </div>
+      </header>
+
+      <div class="map-stage" id="mapView">
+        <section class="china-map-panel" aria-label="中国城市地图">
+          <svg class="china-map-shape" viewBox="0 0 720 520" role="img" aria-label="中国地图轮廓">
+            <path d="M145 162 L202 118 L286 112 L336 78 L414 98 L468 84 L558 130 L614 196 L592 278 L632 342 L552 390 L472 374 L412 442 L326 414 L268 442 L206 390 L126 360 L96 286 Z" />
+            <path class="island-mark" d="M548 430 C568 420 586 430 586 448 C568 462 546 456 548 430 Z" />
+          </svg>
+          <div class="city-marker-list" id="cityMarkerList"></div>
+        </section>
+
+        <aside class="city-info-panel">
+          <p class="card-label">高亮的是我们来过的地方</p>
+          <h2>点一座城市，看那里的照片</h2>
+          <div class="visited-city-list" id="visitedCityList"></div>
+        </aside>
+      </div>
+
+      <div class="city-album-view is-hidden" id="cityAlbumView">
+        <section class="city-album-panel">
+          <div class="city-album-head">
+            <button class="album-back-button" id="backMapButton" type="button">返回地图</button>
+            <div>
+              <p class="card-label">CITY ALBUM</p>
+              <h2 id="cityAlbumTitle">城市相册</h2>
+            </div>
+            <button class="album-add-button" id="addCityAlbumButton" type="button" aria-label="添加照片组">+</button>
+          </div>
+
+          <div class="city-upload-panel is-hidden" id="cityUploadPanel">
+            <input id="cityAlbumNameInput" type="text" maxlength="22" placeholder="给这一组照片命名" autocomplete="off" />
+            <input class="sr-only" id="cityPhotoInput" type="file" accept="image/*" multiple />
+            <button class="choose-city-photos" id="chooseCityPhotosButton" type="button">选择照片</button>
+            <button class="save-city-album" id="saveCityAlbumButton" type="button">保存这一组</button>
+            <button class="cancel-city-album" id="cancelCityAlbumButton" type="button">取消</button>
+            <p id="cityUploadHint">先选择照片，再给这一组起名字。</p>
+          </div>
+
+          <div class="city-album-groups" id="cityAlbumGroups"></div>
+        </section>
+      </div>
+    </section>
   </main>
 
   <button class="pig-pet" id="pigPet" type="button" aria-label="小猪桌宠">
@@ -119,7 +176,8 @@
     </span>
   </button>
 
+  <script src="site-config.js?v=1"></script>
   <script src="photo-data.js?v=3"></script>
-  <script src="script-photo-particles.js?v=4"></script>
+  <script src="script-photo-particles.js?v=6"></script>
 </body>
 </html>
