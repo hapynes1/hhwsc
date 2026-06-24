@@ -11,6 +11,12 @@
       "name": "厦门之行",
       "timestamp": 1777953600000,
       "fixed": true
+    },
+    {
+      "id": "meeting-1782309688852",
+      "name": "放假",
+      "timestamp": 1784260800000,
+      "fixed": false
     }
   ],
   "cityAlbums": []
