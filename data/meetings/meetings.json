@@ -1,1 +1,8 @@
-[]
+[
+  {
+    "id": "default-shenzhen-2026-03-10",
+    "name": "深圳",
+    "timestamp": 1773115200000,
+    "fixed": true
+  }
+]
