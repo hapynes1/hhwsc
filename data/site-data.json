@@ -37,5 +37,20 @@
   "visitedCities": [
     "jinan"
   ],
-  "messages": []
+  "messages": [
+    {
+      "id": "message-1782379121369-3420",
+      "author": "王思澄",
+      "category": "good",
+      "text": "虽然我爱陈立都，可今天是星期四，我更爱肯德基。我想吃好吃的，我是猪。我喜欢这个网站，不希望他关掉。我没睡好，我不想复习。我哭了。我喜欢陈立都，结束",
+      "createdAt": 1782379121369
+    },
+    {
+      "id": "message-1782376316402-5362",
+      "author": "陈立都",
+      "category": "good",
+      "text": "我爱你",
+      "createdAt": 1782376316402
+    }
+  ]
 }
