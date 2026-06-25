@@ -717,6 +717,16 @@ input {
   font-size: 0.76rem;
 }
 
+.message-category-heading-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 28px;
+  border-radius: 999px;
+  color: rgba(255, 248, 242, 0.82);
+  background: rgba(255, 248, 242, 0.12);
+}
+
 .message-column-empty {
   margin: 20px 0;
   color: rgba(255, 248, 242, 0.44);
@@ -761,10 +771,28 @@ input {
 }
 
 .message-category-pill {
-  padding: 2px 8px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 24px;
+  padding: 0;
   border-radius: 999px;
+  color: rgba(255, 248, 242, 0.9);
   background: rgba(255, 248, 242, 0.18);
-  font-size: 0.72rem;
+}
+
+.message-item.from-her .message-category-pill {
+  color: rgba(178, 37, 78, 0.88);
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.message-category-pill .message-category-icon,
+.message-category-heading-icon .message-category-icon,
+.message-summary .message-category-icon {
+  --heart-size: 11px;
+  width: 13px;
+  height: 13px;
 }
 
 .message-bubble p {
@@ -821,9 +849,10 @@ input {
 }
 
 .message-category-icon {
+  --heart-size: 14px;
   position: relative;
-  width: 14px;
-  height: 14px;
+  width: var(--heart-size);
+  height: var(--heart-size);
   transform: rotate(-45deg);
 }
 
@@ -842,16 +871,16 @@ input {
 
 .heart-icon::before {
   left: 0;
-  top: -7px;
-  width: 14px;
-  height: 14px;
+  top: calc(var(--heart-size) * -0.5);
+  width: var(--heart-size);
+  height: var(--heart-size);
 }
 
 .heart-icon::after {
-  left: 7px;
+  left: calc(var(--heart-size) * 0.5);
   top: 0;
-  width: 14px;
-  height: 14px;
+  width: var(--heart-size);
+  height: var(--heart-size);
 }
 
 .broken-heart-icon,
@@ -862,16 +891,16 @@ input {
 
 .broken-heart-icon::before {
   left: 0;
-  top: -7px;
-  width: 14px;
-  height: 14px;
+  top: calc(var(--heart-size) * -0.5);
+  width: var(--heart-size);
+  height: var(--heart-size);
 }
 
 .broken-heart-icon::after {
-  left: 7px;
+  left: calc(var(--heart-size) * 0.5);
   top: 0;
-  width: 14px;
-  height: 14px;
+  width: var(--heart-size);
+  height: var(--heart-size);
 }
 
 .message-category-tabs button[data-message-category="bad"] .broken-heart-icon {
@@ -1062,131 +1091,85 @@ input {
 .city-marker-list {
   position: absolute;
   inset: 0;
+  pointer-events: none;
 }
 
 .city-marker-list {
   z-index: 4;
 }
 
-.city-region {
-  position: absolute;
-  z-index: 2;
-  width: clamp(82px, 9vw, 142px);
-  aspect-ratio: 1.28;
-  transform: translate(-50%, -50%);
-  filter:
-    drop-shadow(0 0 20px rgba(34, 211, 238, 0.54))
-    drop-shadow(0 0 48px rgba(34, 211, 238, 0.18));
+.city-label-svg-layer {
   pointer-events: none;
-  opacity: 0.95;
 }
 
-.city-region path {
-  fill: rgba(34, 211, 238, 0.48);
-  stroke: rgba(135, 250, 244, 0.86);
-  stroke-width: 2.4;
-  vector-effect: non-scaling-stroke;
+.city-marker-svg-layer {
+  pointer-events: auto;
 }
 
 .city-map-label {
-  position: absolute;
-  z-index: 1;
-  max-width: 5.5em;
-  color: rgba(202, 232, 225, 0.44);
-  font-size: clamp(0.68rem, 1vw, 0.82rem);
+  fill: rgba(202, 232, 225, 0.48);
+  font-size: 11px;
   line-height: 1;
-  white-space: nowrap;
-  text-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.5),
-    0 0 12px rgba(9, 17, 29, 0.8);
-  transform: translate(-50%, -50%);
+  text-anchor: middle;
+  dominant-baseline: middle;
   pointer-events: none;
+  paint-order: stroke;
+  stroke: rgba(9, 17, 29, 0.58);
+  stroke-width: 3px;
+  stroke-linejoin: round;
 }
 
 .city-map-label.is-visited-label {
-  z-index: 3;
-  color: rgba(230, 255, 249, 0.92);
-  font-weight: 600;
-  text-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.65),
-    0 0 16px rgba(34, 211, 238, 0.5);
+  fill: rgba(230, 255, 249, 0.98);
+  font-size: 13px;
+  font-weight: 700;
+  stroke: rgba(9, 17, 29, 0.72);
+  stroke-width: 3.6px;
+  filter: drop-shadow(0 0 12px rgba(34, 211, 238, 0.54));
 }
 
 .city-marker {
-  position: absolute;
-  z-index: 5;
-  display: grid;
-  place-items: center;
-  width: 0;
-  height: 0;
-  padding: 0;
-  border: 0;
-  color: rgba(255, 248, 242, 0.46);
-  background: transparent;
-  transform: translate(-50%, -50%);
-}
-
-.city-marker span {
-  position: relative;
-  display: block;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 0 5px rgba(255, 248, 242, 0.06);
-}
-
-.city-marker em {
-  position: absolute;
-  left: 12px;
-  top: -10px;
-  font-style: normal;
-  font-size: 0.76rem;
-  white-space: nowrap;
-  opacity: 0.68;
-}
-
-.city-marker.is-visited {
   color: #e9fffb;
   cursor: pointer;
+  outline: none;
 }
 
-.city-marker.is-visited span {
-  width: 20px;
-  height: 20px;
-  border: 3px solid #fff;
-  background: #ff7a2f;
-  transform: translateY(-10px);
-  box-shadow:
-    0 0 0 8px rgba(42, 214, 210, 0.18),
-    0 0 30px rgba(42, 214, 210, 0.75);
-  animation: cityPulse 2.4s ease-in-out infinite;
+.city-marker:focus-visible .city-pin-shape {
+  stroke: #fff9cf;
+  stroke-width: 4;
 }
 
-.city-marker.is-visited span::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -11px;
-  width: 11px;
-  height: 11px;
-  border-right: 3px solid #fff;
-  border-bottom: 3px solid #fff;
-  background: #ff7a2f;
-  transform: translateX(-50%) rotate(45deg);
+.city-pin-shape {
+  fill: #ff7a2f;
+  stroke: #fff;
+  stroke-width: 3;
+  transform-box: fill-box;
   transform-origin: center;
+  vector-effect: non-scaling-stroke;
+  filter:
+    drop-shadow(0 0 8px rgba(255, 122, 47, 0.72))
+    drop-shadow(0 0 22px rgba(42, 214, 210, 0.48));
+  animation: cityPinFloat 2.8s ease-in-out infinite;
 }
 
-.city-marker.is-visited em {
-  top: 12px;
-  left: 14px;
-  padding: 5px 8px;
-  border-radius: 999px;
-  color: var(--cream);
-  background: rgba(9, 17, 29, 0.5);
-  opacity: 0.94;
-  text-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(8px);
+.city-pin-dot {
+  fill: #fff3ec;
+  stroke: rgba(255, 255, 255, 0.92);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.city-pin-label {
+  fill: var(--cream);
+  font-size: 12px;
+  font-weight: 700;
+  text-anchor: start;
+  dominant-baseline: middle;
+  paint-order: stroke;
+  stroke: rgba(9, 17, 29, 0.72);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+  pointer-events: none;
 }
 
 .map-control-panel {
@@ -1871,14 +1854,14 @@ body.message-open .home-actions {
   }
 }
 
-@keyframes cityPulse {
+@keyframes cityPinFloat {
   0%, 100% {
-    transform: scale(1);
+    transform: translateY(0) scale(1);
     opacity: 1;
   }
   50% {
-    transform: scale(1.28);
-    opacity: 0.78;
+    transform: translateY(-3px) scale(1.08);
+    opacity: 0.92;
   }
 }
 
@@ -2401,10 +2384,6 @@ body.story-open .pig-pet {
 
   .city-map-label {
     font-size: 0.62rem;
-  }
-
-  .city-marker.is-visited em {
-    display: none;
   }
 
   .map-control-panel {

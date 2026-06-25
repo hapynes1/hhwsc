@@ -81,9 +81,15 @@ const CHINA_BOUNDS = {
   maxLat: 53.7
 };
 const MAP_MIN_VISIBLE_LAT = 16.8;
-const MESSAGE_CATEGORY_LABELS = {
-  good: "好的",
-  bad: "不好的"
+const MESSAGE_CATEGORY_INFO = {
+  good: {
+    iconClass: "heart-icon",
+    label: "爱心留言"
+  },
+  bad: {
+    iconClass: "broken-heart-icon",
+    label: "心碎留言"
+  }
 };
 const MESSAGE_RECENT_DAYS = 30;
 const MAP_CITIES = [
@@ -199,6 +205,8 @@ let selectedMessageCategory = "good";
 let chinaMapReady = false;
 let activeMapBounds = { ...CHINA_BOUNDS };
 let cityRegionSvgLayer = null;
+let cityLabelSvgLayer = null;
+let cityMarkerSvgLayer = null;
 let cityBoundaryData = window.CITY_BOUNDARY_GEOJSON || null;
 let cityBoundaryPromise = null;
 let localDataVersion = 0;
@@ -802,18 +810,17 @@ function projectMapPoint(lng, lat) {
   return { x, y };
 }
 
-function getCityMapPosition(city) {
+function getCityMapPoint(city) {
   if (Number.isFinite(city.lng) && Number.isFinite(city.lat)) {
     const center = getCityBoundaryCenter(city);
-    const point = projectMapPoint(center.lng, center.lat);
 
-    return {
-      x: (point.x / MAP_VIEWBOX.width) * 100,
-      y: (point.y / MAP_VIEWBOX.height) * 100
-    };
+    return projectMapPoint(center.lng, center.lat);
   }
 
-  return { x: city.x || 50, y: city.y || 50 };
+  return {
+    x: ((city.x || 50) / 100) * MAP_VIEWBOX.width,
+    y: ((city.y || 50) / 100) * MAP_VIEWBOX.height
+  };
 }
 
 function ringToSvgPath(ring) {
@@ -862,8 +869,12 @@ function setupChinaMapSvg() {
     </defs>
     <g class="province-layer" id="chinaGeoLayer"></g>
     <g class="city-region-svg-layer" id="cityRegionSvgLayer"></g>
+    <g class="city-label-svg-layer" id="cityLabelSvgLayer"></g>
+    <g class="city-marker-svg-layer" id="cityMarkerSvgLayer"></g>
   `;
   cityRegionSvgLayer = chinaMapSvg.querySelector("#cityRegionSvgLayer");
+  cityLabelSvgLayer = chinaMapSvg.querySelector("#cityLabelSvgLayer");
+  cityMarkerSvgLayer = chinaMapSvg.querySelector("#cityMarkerSvgLayer");
 }
 
 function renderChinaGeoMap(data) {
@@ -979,6 +990,49 @@ function renderVisitedCityRegions(visitedCities) {
   }).join("");
 }
 
+function renderSvgCityLabels(labelCities, visitedIds) {
+  if (!cityLabelSvgLayer) {
+    return;
+  }
+
+  cityLabelSvgLayer.innerHTML = labelCities.map((city) => {
+    const point = getCityMapPoint(city);
+
+    return `
+      <text
+        class="city-map-label${visitedIds.includes(city.id) ? " is-visited-label" : ""}"
+        x="${point.x.toFixed(2)}"
+        y="${point.y.toFixed(2)}"
+      >${escapeHtml(city.name)}</text>
+    `;
+  }).join("");
+}
+
+function renderSvgCityMarkers(visitedCities) {
+  if (!cityMarkerSvgLayer) {
+    return;
+  }
+
+  cityMarkerSvgLayer.innerHTML = visitedCities.map((city) => {
+    const point = getCityMapPoint(city);
+
+    return `
+      <g
+        class="city-marker is-visited"
+        role="button"
+        tabindex="0"
+        data-city-id="${city.id}"
+        aria-label="进入${escapeHtml(city.name)}城市记忆"
+        transform="translate(${point.x.toFixed(2)} ${point.y.toFixed(2)})"
+      >
+        <path class="city-pin-shape" d="M0 -20 C11 -20 19 -12 19 -2 C19 10 5 18 0 26 C-5 18 -19 10 -19 -2 C-19 -12 -11 -20 0 -20 Z"></path>
+        <circle class="city-pin-dot" cx="0" cy="-3" r="7"></circle>
+        <text class="city-pin-label" x="18" y="24">${escapeHtml(city.name)}</text>
+      </g>
+    `;
+  }).join("");
+}
+
 function openCityAlbumDb() {
   if (cityAlbumDbPromise) {
     return cityAlbumDbPromise;
@@ -1060,36 +1114,25 @@ function resizePhotoFile(file) {
 }
 
 function renderCityMarkers() {
-  if (!cityMarkerList || !cityRegionList || !citySelect || !cityCountLine) {
+  if (!citySelect || !cityCountLine) {
     return;
   }
 
   const visitedCities = MAP_CITIES.filter((city) => visitedCityIds.includes(city.id));
   const unvisitedCities = MAP_CITIES.filter((city) => !visitedCityIds.includes(city.id));
-  const labelCities = MAP_CITIES.filter((city) => MAP_LABEL_CITY_IDS.has(city.id) || visitedCityIds.includes(city.id));
-  const labelsHtml = labelCities.map((city) => `
-    <span
-      class="city-map-label${visitedCityIds.includes(city.id) ? " is-visited-label" : ""}"
-      style="left: ${getCityMapPosition(city).x.toFixed(2)}%; top: ${getCityMapPosition(city).y.toFixed(2)}%;"
-    >${city.name}</span>
-  `).join("");
-  const markersHtml = visitedCities.map((city) => `
-    <button
-      class="city-marker is-visited"
-      type="button"
-      style="left: ${getCityMapPosition(city).x.toFixed(2)}%; top: ${getCityMapPosition(city).y.toFixed(2)}%;"
-      data-city-id="${city.id}"
-      aria-label="\u8fdb\u5165${city.name}\u57ce\u5e02\u8bb0\u5fc6"
-    >
-      <span></span>
-      <em>${city.name}</em>
-    </button>
-  `).join("");
+  const labelCities = MAP_CITIES.filter((city) => MAP_LABEL_CITY_IDS.has(city.id) && !visitedCityIds.includes(city.id));
 
-  cityRegionList.innerHTML = "";
+  if (cityRegionList) {
+    cityRegionList.innerHTML = "";
+  }
+
   renderVisitedCityRegions(visitedCities);
+  renderSvgCityLabels(labelCities, visitedCityIds);
+  renderSvgCityMarkers(visitedCities);
 
-  cityMarkerList.innerHTML = labelsHtml + markersHtml;
+  if (cityMarkerList) {
+    cityMarkerList.innerHTML = "";
+  }
 
   citySelect.innerHTML = unvisitedCities.length > 0
     ? unvisitedCities.map((city) => `<option value="${city.id}">${city.name}</option>`).join("")
@@ -1098,8 +1141,8 @@ function renderCityMarkers() {
   addVisitedCityButton.disabled = unvisitedCities.length === 0;
   cityCountLine.textContent = `\u5df2\u7ecf\u643a\u624b\u8d70\u8fc7 ${visitedCities.length} \u4e2a\u57ce\u5e02`;
 
-  if (visitedCities.length === 0) {
-    cityMarkerList.innerHTML = `${labelsHtml}<div class="map-empty-note">\u8fd8\u6ca1\u6709\u70b9\u4eae\u4efb\u4f55\u57ce\u5e02\uff0c\u5148\u4ece\u4e0b\u65b9\u6dfb\u52a0\u4e00\u5ea7\u5427\u3002</div>`;
+  if (visitedCities.length === 0 && cityMarkerList) {
+    cityMarkerList.innerHTML = `<div class="map-empty-note">\u8fd8\u6ca1\u6709\u70b9\u4eae\u4efb\u4f55\u57ce\u5e02\uff0c\u5148\u4ece\u4e0b\u65b9\u6dfb\u52a0\u4e00\u5ea7\u5427\u3002</div>`;
   }
 }
 
@@ -1328,8 +1371,17 @@ async function saveSelectedCityAlbum() {
   }
 }
 
-function getMessageCategoryLabel(category) {
-  return MESSAGE_CATEGORY_LABELS[category] || MESSAGE_CATEGORY_LABELS.good;
+function getMessageCategoryInfo(category) {
+  return MESSAGE_CATEGORY_INFO[category] || MESSAGE_CATEGORY_INFO.good;
+}
+
+function renderMessageCategoryIcon(category) {
+  const categoryInfo = getMessageCategoryInfo(category);
+
+  return `
+    <span class="message-category-icon ${categoryInfo.iconClass}" aria-hidden="true"></span>
+    <span class="sr-only">${categoryInfo.label}</span>
+  `;
 }
 
 function renderMessageCards(messages) {
@@ -1341,7 +1393,7 @@ function renderMessageCards(messages) {
         <div class="message-bubble">
           <div class="message-meta">
             <span>${escapeHtml(message.author)}</span>
-            <span class="message-category-pill">${getMessageCategoryLabel(message.category)}</span>
+            <span class="message-category-pill">${renderMessageCategoryIcon(message.category)}</span>
             <time>${formatDateTime(message.createdAt)}</time>
           </div>
           <p>${escapeHtml(message.text)}</p>
@@ -1358,7 +1410,7 @@ function renderMessageCategoryColumn(messages, category, emptyText) {
   return `
     <div class="message-category-column ${category === "bad" ? "is-bad" : "is-good"}">
       <div class="message-category-heading">
-        <span>${getMessageCategoryLabel(category)}</span>
+        <span class="message-category-heading-icon">${renderMessageCategoryIcon(category)}</span>
         <strong>${filteredMessages.length}</strong>
       </div>
       ${filteredMessages.length > 0
@@ -1397,11 +1449,11 @@ function renderMessageSummary(messages) {
         <strong>${messages.length}</strong>
       </div>
       <div>
-        <span>好的</span>
+        <span>${renderMessageCategoryIcon("good")}</span>
         <strong>${goodCount}</strong>
       </div>
       <div>
-        <span>不好的</span>
+        <span>${renderMessageCategoryIcon("bad")}</span>
         <strong>${badCount}</strong>
       </div>
     </section>
@@ -1442,7 +1494,7 @@ function renderMessages() {
     ${renderMessageSummary(sortedMessages)}
     ${renderMessageSection(
       "留言汇总",
-      "所有留下来的话，都按好的和不好的分开收好。",
+      "所有留下来的话，都按两种心情分开放好。",
       sortedMessages,
       "这一类还空着。"
     )}
@@ -1808,13 +1860,33 @@ countdownPage.addEventListener("click", (event) => {
   }
 });
 
-cityMarkerList.addEventListener("click", (event) => {
+function handleCityMarkerOpen(event) {
   const cityButton = event.target.closest("[data-city-id]");
 
   if (cityButton && !cityButton.disabled) {
     openCityAlbum(cityButton.dataset.cityId);
   }
-});
+}
+
+if (cityMarkerList) {
+  cityMarkerList.addEventListener("click", handleCityMarkerOpen);
+}
+
+if (chinaMapSvg) {
+  chinaMapSvg.addEventListener("click", handleCityMarkerOpen);
+  chinaMapSvg.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    const cityButton = event.target.closest("[data-city-id]");
+
+    if (cityButton && !cityButton.disabled) {
+      event.preventDefault();
+      openCityAlbum(cityButton.dataset.cityId);
+    }
+  });
+}
 
 addVisitedCityButton.addEventListener("click", addVisitedCity);
 backMapButton.addEventListener("click", backToMapView);
