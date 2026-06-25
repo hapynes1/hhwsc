@@ -20,6 +20,8 @@
     }
   ],
   "cityAlbums": [],
-  "visitedCities": [],
+  "visitedCities": [
+    "jinan"
+  ],
   "messages": []
 }
