@@ -21,6 +21,27 @@
   ],
   "cityAlbums": [
     {
+      "id": "album-1782404520768",
+      "cityId": "beijing",
+      "cityName": "北京",
+      "title": "北邮",
+      "createdAt": 1782404520769,
+      "photos": [
+        {
+          "name": "IMG_8519.png",
+          "src": "data/cities/北京/album-1782404520768/photo-001.jpg"
+        },
+        {
+          "name": "IMG_8497.jpeg",
+          "src": "data/cities/北京/album-1782404520768/photo-002.jpg"
+        },
+        {
+          "name": "177019.jpeg",
+          "src": "data/cities/北京/album-1782404520768/photo-003.jpg"
+        }
+      ]
+    },
+    {
       "id": "album-1782364627473",
       "cityId": "jinan",
       "cityName": "济南",
