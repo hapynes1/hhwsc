@@ -10,11 +10,5 @@
     "name": "深圳",
     "timestamp": 1773115200000,
     "fixed": true
-  },
-  {
-    "id": "meeting-1782364482472",
-    "name": "放假",
-    "timestamp": 1784260800000,
-    "fixed": false
   }
 ]
