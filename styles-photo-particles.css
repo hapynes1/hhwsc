@@ -1077,13 +1077,15 @@ input {
   filter:
     drop-shadow(0 0 18px rgba(34, 211, 238, 0.52))
     drop-shadow(0 0 42px rgba(34, 211, 238, 0.2));
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .city-region-geo {
   fill: rgba(34, 211, 238, 0.42);
   stroke: rgba(147, 250, 246, 0.88);
   stroke-width: 1.8;
+  cursor: pointer;
+  pointer-events: auto;
   vector-effect: non-scaling-stroke;
 }
 
@@ -1103,7 +1105,7 @@ input {
 }
 
 .city-marker-svg-layer {
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .city-map-label {
@@ -1121,55 +1123,11 @@ input {
 
 .city-map-label.is-visited-label {
   fill: rgba(230, 255, 249, 0.98);
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 11.5px;
+  font-weight: 600;
   stroke: rgba(9, 17, 29, 0.72);
-  stroke-width: 3.6px;
+  stroke-width: 3px;
   filter: drop-shadow(0 0 12px rgba(34, 211, 238, 0.54));
-}
-
-.city-marker {
-  color: #e9fffb;
-  cursor: pointer;
-  outline: none;
-}
-
-.city-marker:focus-visible .city-pin-shape {
-  stroke: #fff9cf;
-  stroke-width: 4;
-}
-
-.city-pin-shape {
-  fill: #ff7a2f;
-  stroke: #fff;
-  stroke-width: 3;
-  transform-box: fill-box;
-  transform-origin: center;
-  vector-effect: non-scaling-stroke;
-  filter:
-    drop-shadow(0 0 8px rgba(255, 122, 47, 0.72))
-    drop-shadow(0 0 22px rgba(42, 214, 210, 0.48));
-  animation: cityPinFloat 2.8s ease-in-out infinite;
-}
-
-.city-pin-dot {
-  fill: #fff3ec;
-  stroke: rgba(255, 255, 255, 0.92);
-  stroke-width: 1.5;
-  vector-effect: non-scaling-stroke;
-}
-
-.city-pin-label {
-  fill: var(--cream);
-  font-size: 12px;
-  font-weight: 700;
-  text-anchor: start;
-  dominant-baseline: middle;
-  paint-order: stroke;
-  stroke: rgba(9, 17, 29, 0.72);
-  stroke-width: 4px;
-  stroke-linejoin: round;
-  pointer-events: none;
 }
 
 .map-control-panel {
@@ -1280,16 +1238,22 @@ input {
 
 .city-album-head {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 16px;
   margin-bottom: 14px;
+}
+
+.city-album-head > div {
+  min-width: 0;
 }
 
 .city-album-head h2 {
   margin: 0;
   font-size: clamp(1.45rem, 3vw, 2.3rem);
   font-weight: 500;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
 }
 
 .album-back-button,
@@ -1381,11 +1345,17 @@ input {
   margin-bottom: 12px;
 }
 
+.city-album-group-head > div {
+  min-width: 0;
+}
+
 .city-album-actions {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .city-album-append {
@@ -1397,6 +1367,8 @@ input {
   margin: 4px 0 0;
   font-size: 1.2rem;
   font-weight: 500;
+  line-height: 1.28;
+  overflow-wrap: anywhere;
 }
 
 .city-photo-grid {
@@ -1851,17 +1823,6 @@ body.message-open .home-actions {
       rotate(calc(var(--bg-r) * 0.7))
       scale(1.02);
     opacity: 0.2;
-  }
-}
-
-@keyframes cityPinFloat {
-  0%, 100% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: translateY(-3px) scale(1.08);
-    opacity: 0.92;
   }
 }
 

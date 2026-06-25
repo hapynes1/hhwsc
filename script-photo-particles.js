@@ -997,12 +997,14 @@ function renderSvgCityLabels(labelCities, visitedIds) {
 
   cityLabelSvgLayer.innerHTML = labelCities.map((city) => {
     const point = getCityMapPoint(city);
+    const isVisited = visitedIds.includes(city.id);
+    const labelY = point.y - (isVisited ? 16 : 0);
 
     return `
       <text
-        class="city-map-label${visitedIds.includes(city.id) ? " is-visited-label" : ""}"
+        class="city-map-label${isVisited ? " is-visited-label" : ""}"
         x="${point.x.toFixed(2)}"
-        y="${point.y.toFixed(2)}"
+        y="${labelY.toFixed(2)}"
       >${escapeHtml(city.name)}</text>
     `;
   }).join("");
@@ -1013,24 +1015,7 @@ function renderSvgCityMarkers(visitedCities) {
     return;
   }
 
-  cityMarkerSvgLayer.innerHTML = visitedCities.map((city) => {
-    const point = getCityMapPoint(city);
-
-    return `
-      <g
-        class="city-marker is-visited"
-        role="button"
-        tabindex="0"
-        data-city-id="${city.id}"
-        aria-label="进入${escapeHtml(city.name)}城市记忆"
-        transform="translate(${point.x.toFixed(2)} ${point.y.toFixed(2)})"
-      >
-        <path class="city-pin-shape" d="M0 -20 C11 -20 19 -12 19 -2 C19 10 5 18 0 26 C-5 18 -19 10 -19 -2 C-19 -12 -11 -20 0 -20 Z"></path>
-        <circle class="city-pin-dot" cx="0" cy="-3" r="7"></circle>
-        <text class="city-pin-label" x="18" y="24">${escapeHtml(city.name)}</text>
-      </g>
-    `;
-  }).join("");
+  cityMarkerSvgLayer.innerHTML = "";
 }
 
 function openCityAlbumDb() {
@@ -1120,7 +1105,7 @@ function renderCityMarkers() {
 
   const visitedCities = MAP_CITIES.filter((city) => visitedCityIds.includes(city.id));
   const unvisitedCities = MAP_CITIES.filter((city) => !visitedCityIds.includes(city.id));
-  const labelCities = MAP_CITIES.filter((city) => MAP_LABEL_CITY_IDS.has(city.id) && !visitedCityIds.includes(city.id));
+  const labelCities = MAP_CITIES.filter((city) => MAP_LABEL_CITY_IDS.has(city.id) || visitedCityIds.includes(city.id));
 
   if (cityRegionList) {
     cityRegionList.innerHTML = "";
