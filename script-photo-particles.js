@@ -1154,6 +1154,9 @@ function closeMapPage() {
     return;
   }
 
+  mapPage.classList.remove("is-album-open");
+  cityAlbumView.classList.add("is-hidden");
+  mapView.classList.remove("is-hidden");
   mapPage.classList.remove("is-active");
   storyPage.classList.remove("is-shifted");
   document.body.classList.remove("map-open");
@@ -1250,6 +1253,7 @@ function openCityAlbum(cityId) {
 
   selectedCityId = city.id;
   resetCityUpload();
+  mapPage.classList.add("is-album-open");
   mapView.classList.add("is-hidden");
   cityAlbumView.classList.remove("is-hidden");
   renderCityAlbums(city.id);
@@ -1258,6 +1262,7 @@ function openCityAlbum(cityId) {
 function backToMapView() {
   selectedCityId = null;
   resetCityUpload();
+  mapPage.classList.remove("is-album-open");
   cityAlbumView.classList.add("is-hidden");
   mapView.classList.remove("is-hidden");
 }

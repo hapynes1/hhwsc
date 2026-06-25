@@ -539,6 +539,13 @@ input {
   gap: 16px;
   height: auto;
   padding: 0;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.map-page.is-album-open .map-header {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px);
 }
 
 .map-header h1 {
@@ -967,9 +974,16 @@ input {
 .map-stage,
 .city-album-view {
   position: relative;
-  z-index: 1;
   height: 100vh;
   padding: 0;
+}
+
+.map-stage {
+  z-index: 1;
+}
+
+.city-album-view {
+  z-index: 9;
 }
 
 .map-stage {
