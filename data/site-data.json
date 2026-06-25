@@ -19,7 +19,21 @@
       "fixed": false
     }
   ],
-  "cityAlbums": [],
+  "cityAlbums": [
+    {
+      "id": "album-1782364627473",
+      "cityId": "jinan",
+      "cityName": "济南",
+      "title": "益友",
+      "createdAt": 1782364627473,
+      "photos": [
+        {
+          "name": "74da8f9bfaa1265e8430020cd84e6440.jpg",
+          "src": "data/cities/济南/album-1782364627473/photo-001.jpg"
+        }
+      ]
+    }
+  ],
   "visitedCities": [
     "jinan"
   ],
