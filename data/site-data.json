@@ -37,5 +37,13 @@
   "visitedCities": [
     "jinan"
   ],
-  "messages": []
+  "messages": [
+    {
+      "id": "message-1782376316402-5362",
+      "author": "陈立都",
+      "category": "good",
+      "text": "我爱你",
+      "createdAt": 1782376316402
+    }
+  ]
 }
