@@ -1,5 +1,13 @@
 {
-  "meetings": [],
+  "meetings": [
+    {
+      "id": "default-xiamen-2026-05-01",
+      "name": "厦门",
+      "timestamp": 1777608000000,
+      "fixed": true
+    }
+  ],
   "cityAlbums": [],
-  "visitedCities": []
+  "visitedCities": [],
+  "messages": []
 }
