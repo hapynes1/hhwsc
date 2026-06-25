@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "id": "default-xiamen-2026-05-01",
+    "name": "厦门",
+    "timestamp": 1777953600000,
+    "fixed": true
+  },
+  {
+    "id": "default-shenzhen-2026-03-10",
+    "name": "深圳",
+    "timestamp": 1773115200000,
+    "fixed": true
+  },
+  {
+    "id": "meeting-1782364534555",
+    "name": "放假",
+    "timestamp": 1784260800000,
+    "fixed": false
+  }
+]

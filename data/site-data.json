@@ -1,5 +1,41 @@
 {
-  "meetings": [],
-  "cityAlbums": [],
-  "visitedCities": []
+  "meetings": [
+    {
+      "id": "default-xiamen-2026-05-01",
+      "name": "厦门",
+      "timestamp": 1777953600000,
+      "fixed": true
+    },
+    {
+      "id": "default-shenzhen-2026-03-10",
+      "name": "深圳",
+      "timestamp": 1773115200000,
+      "fixed": true
+    },
+    {
+      "id": "meeting-1782364534555",
+      "name": "放假",
+      "timestamp": 1784260800000,
+      "fixed": false
+    }
+  ],
+  "cityAlbums": [
+    {
+      "id": "album-1782364627473",
+      "cityId": "jinan",
+      "cityName": "济南",
+      "title": "益友",
+      "createdAt": 1782364627473,
+      "photos": [
+        {
+          "name": "74da8f9bfaa1265e8430020cd84e6440.jpg",
+          "src": "data/cities/济南/album-1782364627473/photo-001.jpg"
+        }
+      ]
+    }
+  ],
+  "visitedCities": [
+    "jinan"
+  ],
+  "messages": []
 }
