@@ -9,12 +9,22 @@ const pigBubble = document.querySelector("#pigBubble");
 const photoFlow = document.querySelector("#photoFlow");
 const openClockButton = document.querySelector("#openClockButton");
 const openMapButton = document.querySelector("#openMapButton");
+const openMessagesButton = document.querySelector("#openMessagesButton");
 const countdownPage = document.querySelector("#countdownPage");
 const backHomeButton = document.querySelector("#backHomeButton");
 const mapPage = document.querySelector("#mapPage");
 const backHomeFromMapButton = document.querySelector("#backHomeFromMapButton");
+const messagePage = document.querySelector("#messagePage");
+const backHomeFromMessagesButton = document.querySelector("#backHomeFromMessagesButton");
+const messageList = document.querySelector("#messageList");
+const messageTextInput = document.querySelector("#messageTextInput");
+const messageHint = document.querySelector("#messageHint");
+const sendMessageButton = document.querySelector("#sendMessageButton");
+const messageAuthorButtons = Array.from(document.querySelectorAll("[data-message-author]"));
+const messageCategoryButtons = Array.from(document.querySelectorAll("[data-message-category]"));
 const mapView = document.querySelector("#mapView");
 const cityAlbumView = document.querySelector("#cityAlbumView");
+const chinaMapSvg = document.querySelector("#chinaMapSvg");
 const cityRegionList = document.querySelector("#cityRegionList");
 const cityMarkerList = document.querySelector("#cityMarkerList");
 const citySelect = document.querySelector("#citySelect");
@@ -59,62 +69,74 @@ const LOVE_START = new Date(2026, 1, 23, 0, 0, 0);
 const MEETING_STORAGE_KEY = "clytze-meetings-v1";
 const API_BASE_URL = window.CLYTZE_API_BASE_URL || "";
 const SITE_DATA_PATH = "data/site-data.json";
+const CHINA_MAP_PATH = "data/china-map.geojson";
 const CITY_ALBUM_DB_NAME = "clytze-city-albums-v1";
 const CITY_ALBUM_STORE = "albums";
-const DEFAULT_CITY_REGION = "M-36 -18 C-14 -38 24 -36 43 -10 C50 8 28 34 -8 36 C-45 38 -58 2 -36 -18Z";
+const MAP_VIEWBOX = { width: 720, height: 520 };
+const CHINA_BOUNDS = {
+  minLng: 73.4,
+  maxLng: 135.2,
+  minLat: 17.6,
+  maxLat: 53.7
+};
+const MESSAGE_CATEGORY_LABELS = {
+  good: "好的",
+  bad: "不好的"
+};
+const MESSAGE_RECENT_DAYS = 30;
 const MAP_CITIES = [
-  { id: "beijing", name: "\u5317\u4eac", x: 56, y: 30 },
-  { id: "tianjin", name: "\u5929\u6d25", x: 58, y: 32 },
-  { id: "shijiazhuang", name: "\u77f3\u5bb6\u5e84", x: 53, y: 36 },
-  { id: "taiyuan", name: "\u592a\u539f", x: 49, y: 38 },
-  { id: "hohhot", name: "\u547c\u548c\u6d69\u7279", x: 48, y: 28 },
-  { id: "jinan", name: "\u6d4e\u5357", x: 57, y: 39 },
-  { id: "liaocheng", name: "\u804a\u57ce", x: 53, y: 39 },
-  { id: "jining", name: "\u6d4e\u5b81", x: 56, y: 43 },
-  { id: "qingdao", name: "\u9752\u5c9b", x: 62, y: 38 },
-  { id: "yantai", name: "\u70df\u53f0", x: 64, y: 34 },
-  { id: "zhengzhou", name: "\u90d1\u5dde", x: 50, y: 47 },
-  { id: "luoyang", name: "\u6d1b\u9633", x: 47, y: 48 },
-  { id: "kaifeng", name: "\u5f00\u5c01", x: 52, y: 47 },
-  { id: "xian", name: "\u897f\u5b89", x: 44, y: 51 },
-  { id: "lanzhou", name: "\u5170\u5dde", x: 36, y: 45 },
-  { id: "xining", name: "\u897f\u5b81", x: 31, y: 43 },
-  { id: "yinchuan", name: "\u94f6\u5ddd", x: 40, y: 36 },
-  { id: "urumqi", name: "\u4e4c\u9c81\u6728\u9f50", x: 18, y: 26 },
-  { id: "shanghai", name: "\u4e0a\u6d77", x: 69, y: 52 },
-  { id: "nanjing", name: "\u5357\u4eac", x: 64, y: 54 },
-  { id: "suzhou", name: "\u82cf\u5dde", x: 68, y: 53 },
-  { id: "wuxi", name: "\u65e0\u9521", x: 66, y: 53 },
-  { id: "hangzhou", name: "\u676d\u5dde", x: 67, y: 57 },
-  { id: "ningbo", name: "\u5b81\u6ce2", x: 70, y: 59 },
-  { id: "hefei", name: "\u5408\u80a5", x: 60, y: 56 },
-  { id: "huangshan", name: "\u9ec4\u5c71", x: 62, y: 61 },
-  { id: "fuzhou", name: "\u798f\u5dde", x: 67, y: 66 },
-  { id: "xiamen", name: "\u53a6\u95e8", x: 66, y: 69 },
-  { id: "nanchang", name: "\u5357\u660c", x: 57, y: 64 },
-  { id: "jingdezhen", name: "\u666f\u5fb7\u9547", x: 61, y: 62 },
-  { id: "wuhan", name: "\u6b66\u6c49", x: 53, y: 61 },
-  { id: "changsha", name: "\u957f\u6c99", x: 54, y: 68 },
-  { id: "zhangjiajie", name: "\u5f20\u5bb6\u754c", x: 49, y: 66 },
-  { id: "guangzhou", name: "\u5e7f\u5dde", x: 59, y: 74 },
-  { id: "shenzhen", name: "\u6df1\u5733", x: 61, y: 76 },
-  { id: "zhuhai", name: "\u73e0\u6d77", x: 59, y: 77 },
-  { id: "foshan", name: "\u4f5b\u5c71", x: 58, y: 74 },
-  { id: "nanning", name: "\u5357\u5b81", x: 49, y: 76 },
-  { id: "guilin", name: "\u6842\u6797", x: 51, y: 72 },
-  { id: "haikou", name: "\u6d77\u53e3", x: 55, y: 84 },
-  { id: "sanya", name: "\u4e09\u4e9a", x: 55, y: 89 },
-  { id: "chongqing", name: "\u91cd\u5e86", x: 43, y: 62 },
-  { id: "chengdu", name: "\u6210\u90fd", x: 38, y: 58 },
-  { id: "guiyang", name: "\u8d35\u9633", x: 45, y: 71 },
-  { id: "kunming", name: "\u6606\u660e", x: 39, y: 76 },
-  { id: "dali", name: "\u5927\u7406", x: 35, y: 76 },
-  { id: "lijiang", name: "\u4e3d\u6c5f", x: 34, y: 73 },
-  { id: "lhasa", name: "\u62c9\u8428", x: 25, y: 60 },
-  { id: "shenyang", name: "\u6c88\u9633", x: 67, y: 23 },
-  { id: "dalian", name: "\u5927\u8fde", x: 64, y: 30 },
-  { id: "changchun", name: "\u957f\u6625", x: 69, y: 17 },
-  { id: "harbin", name: "\u54c8\u5c14\u6ee8", x: 70, y: 11 }
+  { id: "beijing", name: "\u5317\u4eac", lng: 116.4074, lat: 39.9042, adcode: "110000" },
+  { id: "tianjin", name: "\u5929\u6d25", lng: 117.2000, lat: 39.1333, adcode: "120000" },
+  { id: "shijiazhuang", name: "\u77f3\u5bb6\u5e84", lng: 114.5149, lat: 38.0428, adcode: "130100" },
+  { id: "taiyuan", name: "\u592a\u539f", lng: 112.5489, lat: 37.8706, adcode: "140100" },
+  { id: "hohhot", name: "\u547c\u548c\u6d69\u7279", lng: 111.7519, lat: 40.8415, adcode: "150100" },
+  { id: "jinan", name: "\u6d4e\u5357", lng: 117.1201, lat: 36.6512, adcode: "370100" },
+  { id: "liaocheng", name: "\u804a\u57ce", lng: 115.9854, lat: 36.4567, adcode: "371500" },
+  { id: "jining", name: "\u6d4e\u5b81", lng: 116.5872, lat: 35.4154, adcode: "370800" },
+  { id: "qingdao", name: "\u9752\u5c9b", lng: 120.3826, lat: 36.0671, adcode: "370200" },
+  { id: "yantai", name: "\u70df\u53f0", lng: 121.4479, lat: 37.4638, adcode: "370600" },
+  { id: "zhengzhou", name: "\u90d1\u5dde", lng: 113.6254, lat: 34.7466, adcode: "410100" },
+  { id: "luoyang", name: "\u6d1b\u9633", lng: 112.4536, lat: 34.6197, adcode: "410300" },
+  { id: "kaifeng", name: "\u5f00\u5c01", lng: 114.3076, lat: 34.7973, adcode: "410200" },
+  { id: "xian", name: "\u897f\u5b89", lng: 108.9398, lat: 34.3416, adcode: "610100" },
+  { id: "lanzhou", name: "\u5170\u5dde", lng: 103.8343, lat: 36.0611, adcode: "620100" },
+  { id: "xining", name: "\u897f\u5b81", lng: 101.7782, lat: 36.6171, adcode: "630100" },
+  { id: "yinchuan", name: "\u94f6\u5ddd", lng: 106.2309, lat: 38.4872, adcode: "640100" },
+  { id: "urumqi", name: "\u4e4c\u9c81\u6728\u9f50", lng: 87.6168, lat: 43.8256, adcode: "650100" },
+  { id: "shanghai", name: "\u4e0a\u6d77", lng: 121.4737, lat: 31.2304, adcode: "310000" },
+  { id: "nanjing", name: "\u5357\u4eac", lng: 118.7969, lat: 32.0603, adcode: "320100" },
+  { id: "suzhou", name: "\u82cf\u5dde", lng: 120.5853, lat: 31.2989, adcode: "320500" },
+  { id: "wuxi", name: "\u65e0\u9521", lng: 120.3119, lat: 31.4912, adcode: "320200" },
+  { id: "hangzhou", name: "\u676d\u5dde", lng: 120.1551, lat: 30.2741, adcode: "330100" },
+  { id: "ningbo", name: "\u5b81\u6ce2", lng: 121.5503, lat: 29.8746, adcode: "330200" },
+  { id: "hefei", name: "\u5408\u80a5", lng: 117.2272, lat: 31.8206, adcode: "340100" },
+  { id: "huangshan", name: "\u9ec4\u5c71", lng: 118.3375, lat: 29.7147, adcode: "341000" },
+  { id: "fuzhou", name: "\u798f\u5dde", lng: 119.2965, lat: 26.0745, adcode: "350100" },
+  { id: "xiamen", name: "\u53a6\u95e8", lng: 118.0894, lat: 24.4798, adcode: "350200" },
+  { id: "nanchang", name: "\u5357\u660c", lng: 115.8582, lat: 28.6829, adcode: "360100" },
+  { id: "jingdezhen", name: "\u666f\u5fb7\u9547", lng: 117.1849, lat: 29.2744, adcode: "360200" },
+  { id: "wuhan", name: "\u6b66\u6c49", lng: 114.3054, lat: 30.5931, adcode: "420100" },
+  { id: "changsha", name: "\u957f\u6c99", lng: 112.9388, lat: 28.2282, adcode: "430100" },
+  { id: "zhangjiajie", name: "\u5f20\u5bb6\u754c", lng: 110.4792, lat: 29.1171, adcode: "430800" },
+  { id: "guangzhou", name: "\u5e7f\u5dde", lng: 113.2644, lat: 23.1291, adcode: "440100" },
+  { id: "shenzhen", name: "\u6df1\u5733", lng: 114.0579, lat: 22.5431, adcode: "440300" },
+  { id: "zhuhai", name: "\u73e0\u6d77", lng: 113.5767, lat: 22.2707, adcode: "440400" },
+  { id: "foshan", name: "\u4f5b\u5c71", lng: 113.1214, lat: 23.0215, adcode: "440600" },
+  { id: "nanning", name: "\u5357\u5b81", lng: 108.3669, lat: 22.8170, adcode: "450100" },
+  { id: "guilin", name: "\u6842\u6797", lng: 110.2900, lat: 25.2736, adcode: "450300" },
+  { id: "haikou", name: "\u6d77\u53e3", lng: 110.1983, lat: 20.0440, adcode: "460100" },
+  { id: "sanya", name: "\u4e09\u4e9a", lng: 109.5119, lat: 18.2528, adcode: "460200" },
+  { id: "chongqing", name: "\u91cd\u5e86", lng: 106.5516, lat: 29.5630, adcode: "500000" },
+  { id: "chengdu", name: "\u6210\u90fd", lng: 104.0665, lat: 30.5723, adcode: "510100" },
+  { id: "guiyang", name: "\u8d35\u9633", lng: 106.6302, lat: 26.6477, adcode: "520100" },
+  { id: "kunming", name: "\u6606\u660e", lng: 102.8329, lat: 24.8801, adcode: "530100" },
+  { id: "dali", name: "\u5927\u7406", lng: 100.2676, lat: 25.6065, adcode: "532900" },
+  { id: "lijiang", name: "\u4e3d\u6c5f", lng: 100.2330, lat: 26.8721, adcode: "530700" },
+  { id: "lhasa", name: "\u62c9\u8428", lng: 91.1172, lat: 29.6469, adcode: "540100" },
+  { id: "shenyang", name: "\u6c88\u9633", lng: 123.4315, lat: 41.8057, adcode: "210100" },
+  { id: "dalian", name: "\u5927\u8fde", lng: 121.6147, lat: 38.9140, adcode: "210200" },
+  { id: "changchun", name: "\u957f\u6625", lng: 125.3235, lat: 43.8171, adcode: "220100" },
+  { id: "harbin", name: "\u54c8\u5c14\u6ee8", lng: 126.5349, lat: 45.8038, adcode: "230100" }
 ];
 const MAP_LABEL_CITY_IDS = new Set([
   "beijing",
@@ -168,6 +190,11 @@ let uploadSecret = "";
 let customMeetingsCache = [];
 let cityAlbumsCache = [];
 let visitedCityIds = [];
+let messagesCache = [];
+let selectedMessageAuthor = "陈立都";
+let selectedMessageCategory = "good";
+let chinaMapReady = false;
+let cityRegionSvgLayer = null;
 
 function noise(seed) {
   const value = Math.sin(seed * 918.43) * 10000;
@@ -338,6 +365,29 @@ function normalizeVisitedCities(value) {
   return Array.from(new Set(value.map(String))).filter((cityId) => knownCityIds.has(cityId));
 }
 
+function normalizeMessage(message) {
+  if (!message || !message.text) {
+    return null;
+  }
+
+  const createdAt = Number(message.createdAt) || Date.now();
+  const author = message.author === "王思澄" ? "王思澄" : "陈立都";
+  const category = message.category === "bad" ? "bad" : "good";
+  const text = String(message.text || "").trim().slice(0, 240);
+
+  if (!text) {
+    return null;
+  }
+
+  return {
+    id: String(message.id || `message-${createdAt}`),
+    author,
+    category,
+    text,
+    createdAt
+  };
+}
+
 function applySiteData(data) {
   if (Array.isArray(data.meetings)) {
     saveCustomMeetings(data.meetings);
@@ -349,8 +399,13 @@ function applySiteData(data) {
 
   visitedCityIds = normalizeVisitedCities(data.visitedCities);
 
+  if (Array.isArray(data.messages)) {
+    messagesCache = data.messages.map(normalizeMessage).filter(Boolean);
+  }
+
   renderCountdowns();
   renderCityMarkers();
+  renderMessages();
 
   if (selectedCityId) {
     renderCityAlbums(selectedCityId);
@@ -642,6 +697,145 @@ function getCityById(id) {
   return MAP_CITIES.find((city) => city.id === id);
 }
 
+function projectMapPoint(lng, lat) {
+  const usableWidth = MAP_VIEWBOX.width - 56;
+  const usableHeight = MAP_VIEWBOX.height - 56;
+  const x = 28 + ((lng - CHINA_BOUNDS.minLng) / (CHINA_BOUNDS.maxLng - CHINA_BOUNDS.minLng)) * usableWidth;
+  const y = 28 + ((CHINA_BOUNDS.maxLat - lat) / (CHINA_BOUNDS.maxLat - CHINA_BOUNDS.minLat)) * usableHeight;
+
+  return { x, y };
+}
+
+function getCityMapPosition(city) {
+  if (Number.isFinite(city.lng) && Number.isFinite(city.lat)) {
+    const point = projectMapPoint(city.lng, city.lat);
+
+    return {
+      x: (point.x / MAP_VIEWBOX.width) * 100,
+      y: (point.y / MAP_VIEWBOX.height) * 100
+    };
+  }
+
+  return { x: city.x || 50, y: city.y || 50 };
+}
+
+function ringToSvgPath(ring) {
+  return ring
+    .filter((point) => Array.isArray(point) && point.length >= 2 && point[1] >= 16.8)
+    .map((point, index) => {
+      const projected = projectMapPoint(point[0], point[1]);
+      const command = index === 0 ? "M" : "L";
+
+      return `${command}${projected.x.toFixed(2)} ${projected.y.toFixed(2)}`;
+    })
+    .join(" ");
+}
+
+function geometryToSvgPath(geometry) {
+  if (!geometry || !geometry.coordinates) {
+    return "";
+  }
+
+  const polygons = geometry.type === "Polygon"
+    ? [geometry.coordinates]
+    : geometry.coordinates;
+
+  return polygons
+    .flatMap((polygon) => polygon.map((ring) => {
+      const path = ringToSvgPath(ring);
+
+      return path ? `${path} Z` : "";
+    }))
+    .filter(Boolean)
+    .join(" ");
+}
+
+function setupChinaMapSvg() {
+  if (!chinaMapSvg || chinaMapReady) {
+    return;
+  }
+
+  chinaMapSvg.innerHTML = `
+    <defs>
+      <linearGradient id="chinaGeoGradient" x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0%" stop-color="#3f8067" />
+        <stop offset="58%" stop-color="#2e6f63" />
+        <stop offset="100%" stop-color="#214f69" />
+      </linearGradient>
+    </defs>
+    <g class="province-layer" id="chinaGeoLayer"></g>
+    <g class="city-region-svg-layer" id="cityRegionSvgLayer"></g>
+  `;
+  cityRegionSvgLayer = chinaMapSvg.querySelector("#cityRegionSvgLayer");
+}
+
+function renderChinaGeoMap(data) {
+  setupChinaMapSvg();
+
+  const geoLayer = chinaMapSvg && chinaMapSvg.querySelector("#chinaGeoLayer");
+  const features = Array.isArray(data.features) ? data.features : [];
+
+  if (!geoLayer) {
+    return;
+  }
+
+  geoLayer.innerHTML = features.map((feature, index) => {
+    const name = feature.properties && feature.properties.name ? feature.properties.name : "";
+    const path = geometryToSvgPath(feature.geometry);
+
+    if (!path) {
+      return "";
+    }
+
+    return `<path class="china-province tone-${(index % 12) + 1}" data-province="${escapeHtml(name)}" d="${path}"></path>`;
+  }).join("");
+  chinaMapReady = true;
+  renderCityMarkers();
+}
+
+async function loadChinaGeoMap() {
+  if (!chinaMapSvg || chinaMapReady) {
+    return;
+  }
+
+  if (window.CHINA_MAP_GEOJSON) {
+    renderChinaGeoMap(window.CHINA_MAP_GEOJSON);
+    return;
+  }
+
+  try {
+    const response = await fetch(`${CHINA_MAP_PATH}?v=1`, { cache: "force-cache" });
+
+    if (!response.ok) {
+      throw new Error("map load failed");
+    }
+
+    renderChinaGeoMap(await response.json());
+  } catch (error) {
+    chinaMapSvg.classList.add("is-fallback-map");
+  }
+}
+
+function renderVisitedCityRegions(visitedCities) {
+  if (!cityRegionSvgLayer) {
+    return;
+  }
+
+  cityRegionSvgLayer.innerHTML = visitedCities.map((city) => {
+    const point = projectMapPoint(city.lng, city.lat);
+
+    return `
+      <ellipse
+        class="city-region-geo"
+        cx="${point.x.toFixed(2)}"
+        cy="${point.y.toFixed(2)}"
+        rx="15"
+        ry="10"
+      ></ellipse>
+    `;
+  }).join("");
+}
+
 function openCityAlbumDb() {
   if (cityAlbumDbPromise) {
     return cityAlbumDbPromise;
@@ -733,14 +927,14 @@ function renderCityMarkers() {
   const labelsHtml = labelCities.map((city) => `
     <span
       class="city-map-label${visitedCityIds.includes(city.id) ? " is-visited-label" : ""}"
-      style="left: ${city.x}%; top: ${city.y}%;"
+      style="left: ${getCityMapPosition(city).x.toFixed(2)}%; top: ${getCityMapPosition(city).y.toFixed(2)}%;"
     >${city.name}</span>
   `).join("");
   const markersHtml = visitedCities.map((city) => `
     <button
       class="city-marker is-visited"
       type="button"
-      style="left: ${city.x}%; top: ${city.y}%;"
+      style="left: ${getCityMapPosition(city).x.toFixed(2)}%; top: ${getCityMapPosition(city).y.toFixed(2)}%;"
       data-city-id="${city.id}"
       aria-label="\u8fdb\u5165${city.name}\u57ce\u5e02\u8bb0\u5fc6"
     >
@@ -749,11 +943,8 @@ function renderCityMarkers() {
     </button>
   `).join("");
 
-  cityRegionList.innerHTML = visitedCities.map((city) => `
-    <svg class="city-region" viewBox="-70 -55 140 110" style="left: ${city.x}%; top: ${city.y}%;" aria-hidden="true">
-      <path d="${city.region || DEFAULT_CITY_REGION}"></path>
-    </svg>
-  `).join("");
+  cityRegionList.innerHTML = "";
+  renderVisitedCityRegions(visitedCities);
 
   cityMarkerList.innerHTML = labelsHtml + markersHtml;
 
@@ -774,6 +965,7 @@ function openMapPage() {
     return;
   }
 
+  loadChinaGeoMap();
   renderCityMarkers();
   mapPage.classList.remove("is-hidden");
   mapView.classList.remove("is-hidden");
@@ -948,6 +1140,237 @@ async function saveSelectedCityAlbum() {
     cityUploadHint.classList.add("is-error");
   } finally {
     saveCityAlbumButton.disabled = false;
+  }
+}
+
+function getMessageCategoryLabel(category) {
+  return MESSAGE_CATEGORY_LABELS[category] || MESSAGE_CATEGORY_LABELS.good;
+}
+
+function renderMessageCards(messages) {
+  return messages.map((message) => {
+    const isHer = message.author === "王思澄";
+
+    return `
+      <article class="message-item ${isHer ? "from-her" : "from-him"}">
+        <div class="message-bubble">
+          <div class="message-meta">
+            <span>${escapeHtml(message.author)}</span>
+            <span class="message-category-pill">${getMessageCategoryLabel(message.category)}</span>
+            <time>${formatDateTime(message.createdAt)}</time>
+          </div>
+          <p>${escapeHtml(message.text)}</p>
+          <button class="message-delete-button" type="button" data-delete-message="${message.id}">删除</button>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+function renderMessageCategoryColumn(messages, category, emptyText) {
+  const filteredMessages = messages.filter((message) => message.category === category);
+
+  return `
+    <div class="message-category-column ${category === "bad" ? "is-bad" : "is-good"}">
+      <div class="message-category-heading">
+        <span>${getMessageCategoryLabel(category)}</span>
+        <strong>${filteredMessages.length}</strong>
+      </div>
+      ${filteredMessages.length > 0
+        ? renderMessageCards(filteredMessages)
+        : `<p class="message-column-empty">${emptyText}</p>`}
+    </div>
+  `;
+}
+
+function renderMessageSection(title, subtitle, messages, emptyText) {
+  return `
+    <section class="message-section">
+      <header class="message-section-header">
+        <div>
+          <h2>${title}</h2>
+          <p>${subtitle}</p>
+        </div>
+        <strong>${messages.length}</strong>
+      </header>
+      <div class="message-category-grid">
+        ${renderMessageCategoryColumn(messages, "good", emptyText)}
+        ${renderMessageCategoryColumn(messages, "bad", emptyText)}
+      </div>
+    </section>
+  `;
+}
+
+function renderMessageSummary(messages) {
+  const goodCount = messages.filter((message) => message.category === "good").length;
+  const badCount = messages.filter((message) => message.category === "bad").length;
+
+  return `
+    <section class="message-summary">
+      <div>
+        <span>全部留言</span>
+        <strong>${messages.length}</strong>
+      </div>
+      <div>
+        <span>好的</span>
+        <strong>${goodCount}</strong>
+      </div>
+      <div>
+        <span>不好的</span>
+        <strong>${badCount}</strong>
+      </div>
+    </section>
+  `;
+}
+
+function renderMessages() {
+  if (!messageList) {
+    return;
+  }
+
+  const sortedMessages = messagesCache
+    .map(normalizeMessage)
+    .filter(Boolean)
+    .sort((a, b) => b.createdAt - a.createdAt);
+
+  messagesCache = sortedMessages;
+
+  if (sortedMessages.length === 0) {
+    messageList.innerHTML = `
+      <div class="message-empty">
+        这里还没有留言。第一句，就留给今天吧。
+      </div>
+    `;
+    return;
+  }
+
+  const recentThreshold = Date.now() - MESSAGE_RECENT_DAYS * DAY_MS;
+  const recentMessages = sortedMessages.filter((message) => message.createdAt >= recentThreshold);
+
+  messageList.innerHTML = `
+    ${renderMessageSection(
+      "最近一个月",
+      "先看刚刚发生的心情，不让新的话被旧日子盖住。",
+      recentMessages,
+      "这个月这里还没有。"
+    )}
+    ${renderMessageSummary(sortedMessages)}
+    ${renderMessageSection(
+      "留言汇总",
+      "所有留下来的话，都按好的和不好的分开收好。",
+      sortedMessages,
+      "这一类还空着。"
+    )}
+  `;
+
+  messageList.scrollTop = 0;
+}
+
+function showMessageHint(text, isError = false) {
+  if (!messageHint) {
+    return;
+  }
+
+  messageHint.textContent = text;
+  messageHint.classList.toggle("is-error", isError);
+}
+
+function openMessagesPage() {
+  if (!messagePage || messagePage.classList.contains("is-active")) {
+    return;
+  }
+
+  renderMessages();
+  messagePage.classList.remove("is-hidden");
+  storyPage.classList.add("is-shifted");
+  document.body.classList.add("message-open");
+  void messagePage.offsetWidth;
+  messagePage.classList.add("is-active");
+}
+
+function closeMessagesPage() {
+  if (!messagePage || !messagePage.classList.contains("is-active")) {
+    return;
+  }
+
+  messagePage.classList.remove("is-active");
+  storyPage.classList.remove("is-shifted");
+  document.body.classList.remove("message-open");
+  window.setTimeout(() => {
+    if (!messagePage.classList.contains("is-active")) {
+      messagePage.classList.add("is-hidden");
+    }
+  }, 560);
+}
+
+function setMessageAuthor(author) {
+  selectedMessageAuthor = author === "王思澄" ? "王思澄" : "陈立都";
+  messageAuthorButtons.forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.messageAuthor === selectedMessageAuthor);
+  });
+}
+
+function setMessageCategory(category) {
+  selectedMessageCategory = category === "bad" ? "bad" : "good";
+  messageCategoryButtons.forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.messageCategory === selectedMessageCategory);
+  });
+}
+
+async function saveMessagesToGithub() {
+  await saveToGithub("save-messages", { messages: messagesCache });
+}
+
+async function sendMessage() {
+  const text = (messageTextInput.value || "").trim();
+
+  if (!text) {
+    showMessageHint("先写一点想说的话。", true);
+    return;
+  }
+
+  const previousMessages = messagesCache.slice();
+  const message = {
+    id: `message-${Date.now()}-${Math.round(Math.random() * 10000)}`,
+    author: selectedMessageAuthor,
+    category: selectedMessageCategory,
+    text: text.slice(0, 240),
+    createdAt: Date.now()
+  };
+
+  messagesCache = messagesCache.concat(message);
+  messageTextInput.value = "";
+  renderMessages();
+  showMessageHint("正在保存到 GitHub...");
+  sendMessageButton.disabled = true;
+
+  try {
+    await saveMessagesToGithub();
+    showMessageHint("保存好了。");
+  } catch (error) {
+    messagesCache = previousMessages;
+    renderMessages();
+    messageTextInput.value = text;
+    showMessageHint(error.message || "留言保存失败。请确认是在 Vercel 网站里操作。", true);
+  } finally {
+    sendMessageButton.disabled = false;
+  }
+}
+
+async function deleteMessage(messageId) {
+  const previousMessages = messagesCache.slice();
+
+  messagesCache = messagesCache.filter((message) => message.id !== messageId);
+  renderMessages();
+  showMessageHint("正在删除留言...");
+
+  try {
+    await saveMessagesToGithub();
+    showMessageHint("已删除。");
+  } catch (error) {
+    messagesCache = previousMessages;
+    renderMessages();
+    showMessageHint(error.message || "删除失败，GitHub 没有更新。", true);
   }
 }
 
@@ -1132,6 +1555,7 @@ passwordInput.addEventListener("input", () => {
 customMeetingsCache = loadLocalMeetings();
 renderCountdowns();
 renderCityMarkers();
+renderMessages();
 loadSiteData();
 window.setInterval(renderCountdowns, 1000);
 
@@ -1139,10 +1563,39 @@ openClockButton.addEventListener("click", openCountdownPage);
 backHomeButton.addEventListener("click", closeCountdownPage);
 openMapButton.addEventListener("click", openMapPage);
 backHomeFromMapButton.addEventListener("click", closeMapPage);
+openMessagesButton.addEventListener("click", openMessagesPage);
+backHomeFromMessagesButton.addEventListener("click", closeMessagesPage);
 addMeetingButton.addEventListener("click", addMeeting);
 cancelEditButton.addEventListener("click", () => {
   resetMeetingEditor(true);
   showAddHint("\u5df2\u53d6\u6d88\u66f4\u6539\uff0c\u53ef\u4ee5\u7ee7\u7eed\u6dfb\u52a0\u65b0\u7684\u89c1\u9762\u3002");
+});
+
+messageAuthorButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setMessageAuthor(button.dataset.messageAuthor);
+  });
+});
+
+messageCategoryButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setMessageCategory(button.dataset.messageCategory);
+  });
+});
+
+sendMessageButton.addEventListener("click", sendMessage);
+messageTextInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault();
+    sendMessage();
+  }
+});
+messageList.addEventListener("click", (event) => {
+  const deleteButton = event.target.closest("[data-delete-message]");
+
+  if (deleteButton) {
+    deleteMessage(deleteButton.dataset.deleteMessage);
+  }
 });
 
 [meetingNameInput, meetingDateInput, meetingTimeInput].forEach((input) => {
@@ -1221,6 +1674,11 @@ document.addEventListener("keydown", (event) => {
     }
 
     closeMapPage();
+    return;
+  }
+
+  if (event.key === "Escape" && document.body.classList.contains("message-open")) {
+    closeMessagesPage();
   }
 });
 

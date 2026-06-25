@@ -59,10 +59,11 @@ async function getSiteData(env) {
     return {
       meetings: Array.isArray(data.meetings) ? data.meetings : [],
       cityAlbums: Array.isArray(data.cityAlbums) ? data.cityAlbums : [],
-      visitedCities: Array.isArray(data.visitedCities) ? data.visitedCities : []
+      visitedCities: Array.isArray(data.visitedCities) ? data.visitedCities : [],
+      messages: Array.isArray(data.messages) ? data.messages : []
     };
   } catch (error) {
-    return { meetings: [], cityAlbums: [], visitedCities: [] };
+    return { meetings: [], cityAlbums: [], visitedCities: [], messages: [] };
   }
 }
 
@@ -163,6 +164,41 @@ async function saveVisitedCities(env, payload) {
   data.visitedCities = visitedCities;
 
   const sha = await commitFiles(env, "更新城市记忆地图", [
+    { path: DATA_PATH, content: JSON.stringify(data, null, 2), encoding: "utf-8" }
+  ]);
+
+  return { ok: true, sha, data };
+}
+
+function normalizeMessage(message) {
+  const text = cleanText(message && message.text, "", 240);
+
+  if (!text) {
+    return null;
+  }
+
+  const createdAt = Number(message.createdAt) || Date.now();
+  const author = message.author === "王思澄" ? "王思澄" : "陈立都";
+  const category = message.category === "bad" ? "bad" : "good";
+
+  return {
+    id: cleanText(message.id, `message-${createdAt}`, 80),
+    author,
+    category,
+    text,
+    createdAt
+  };
+}
+
+async function saveMessages(env, payload) {
+  const data = await getSiteData(env);
+  const messages = Array.isArray(payload.messages)
+    ? payload.messages.map(normalizeMessage).filter(Boolean).slice(-1000)
+    : [];
+
+  data.messages = messages;
+
+  const sha = await commitFiles(env, "更新留言墙", [
     { path: DATA_PATH, content: JSON.stringify(data, null, 2), encoding: "utf-8" }
   ]);
 
@@ -331,6 +367,11 @@ module.exports = async function handler(req, res) {
 
     if (body.action === "save-visited-cities") {
       sendJson(res, 200, await saveVisitedCities(env, body.payload || {}));
+      return;
+    }
+
+    if (body.action === "save-messages") {
+      sendJson(res, 200, await saveMessages(env, body.payload || {}));
       return;
     }
 

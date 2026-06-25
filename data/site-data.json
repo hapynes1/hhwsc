@@ -1,37 +1,5 @@
 {
-  "meetings": [
-    {
-      "id": "default-shenzhen-2026-03-10",
-      "name": "深圳",
-      "timestamp": 1773115200000,
-      "fixed": true
-    },
-    {
-      "id": "default-xiamen-2026-05-01",
-      "name": "厦门",
-      "timestamp": 1777953600000,
-      "fixed": true
-    },
-    {
-      "id": "meeting-1782309688852",
-      "name": "放假",
-      "timestamp": 1784260800000,
-      "fixed": false
-    }
-  ],
-  "cityAlbums": [
-    {
-      "id": "album-1782317796712",
-      "cityId": "shenzhen",
-      "cityName": "深圳",
-      "title": "欢乐谷",
-      "createdAt": 1782317796712,
-      "photos": [
-        {
-          "name": "微信图片_20260625001555_558_128.jpg",
-          "src": "data/cities/深圳/album-1782317796712/photo-001.jpg"
-        }
-      ]
-    }
-  ]
+  "meetings": [],
+  "cityAlbums": [],
+  "visitedCities": []
 }
