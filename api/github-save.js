@@ -253,6 +253,55 @@ async function addCityAlbum(env, payload) {
   return { ok: true, sha, album, data };
 }
 
+async function appendCityAlbumPhotos(env, payload) {
+  const data = await getSiteData(env);
+  const albumId = String(payload.albumId || "");
+  const photos = Array.isArray(payload.photos) ? payload.photos : [];
+  const albums = Array.isArray(data.cityAlbums) ? data.cityAlbums : [];
+  const album = albums.find((item) => item.id === albumId);
+
+  if (!album) {
+    throw new Error("没有找到这一组照片。");
+  }
+
+  const existingPhotos = Array.isArray(album.photos) ? album.photos : [];
+  const firstPhotoPath = existingPhotos.find((photo) => photo && photo.src)?.src || "";
+  const albumFolder = firstPhotoPath.includes("/")
+    ? firstPhotoPath.split("/").slice(0, -1).join("/")
+    : `data/cities/${cleanText(album.cityName, "城市", 24)}/${album.id}`;
+  const photoRecords = [];
+  const files = [];
+
+  photos.forEach((photo, index) => {
+    const extension = getPhotoExtension(photo.src);
+    const filename = `photo-${String(existingPhotos.length + index + 1).padStart(3, "0")}.${extension}`;
+    const path = `${albumFolder}/${filename}`;
+
+    files.push({
+      path,
+      content: getPhotoBase64(photo.src),
+      encoding: "base64"
+    });
+    photoRecords.push({
+      name: cleanText(photo.name, filename, 80),
+      src: path
+    });
+  });
+
+  album.photos = existingPhotos.concat(photoRecords);
+  album.updatedAt = Date.now();
+  data.cityAlbums = albums;
+  files.push({
+    path: DATA_PATH,
+    content: JSON.stringify(data, null, 2),
+    encoding: "utf-8"
+  });
+
+  const sha = await commitFiles(env, `追加${album.cityName || "城市"}相册照片：${album.title || album.id}`, files);
+
+  return { ok: true, sha, album, data };
+}
+
 async function deleteCityAlbum(env, payload) {
   const data = await getSiteData(env);
   const albumId = String(payload.albumId || "");
@@ -377,6 +426,11 @@ module.exports = async function handler(req, res) {
 
     if (body.action === "add-city-album") {
       sendJson(res, 200, await addCityAlbum(env, body.payload || {}));
+      return;
+    }
+
+    if (body.action === "append-city-album-photos") {
+      sendJson(res, 200, await appendCityAlbumPhotos(env, body.payload || {}));
       return;
     }
 

@@ -70,6 +70,7 @@ const MEETING_STORAGE_KEY = "clytze-meetings-v1";
 const API_BASE_URL = window.CLYTZE_API_BASE_URL || "";
 const SITE_DATA_PATH = "data/site-data.json";
 const CHINA_MAP_PATH = "data/china-map.geojson";
+const CITY_BOUNDARIES_PATH = "data/city-boundaries.json";
 const CITY_ALBUM_DB_NAME = "clytze-city-albums-v1";
 const CITY_ALBUM_STORE = "albums";
 const MAP_VIEWBOX = { width: 720, height: 520 };
@@ -79,6 +80,7 @@ const CHINA_BOUNDS = {
   minLat: 17.6,
   maxLat: 53.7
 };
+const MAP_MIN_VISIBLE_LAT = 16.8;
 const MESSAGE_CATEGORY_LABELS = {
   good: "好的",
   bad: "不好的"
@@ -185,6 +187,7 @@ let pigMessageIndex = 0;
 let editingMeetingId = null;
 let selectedCityId = null;
 let selectedCityFiles = [];
+let appendTargetAlbumId = null;
 let cityAlbumDbPromise = null;
 let uploadSecret = "";
 let customMeetingsCache = [];
@@ -194,7 +197,11 @@ let messagesCache = [];
 let selectedMessageAuthor = "陈立都";
 let selectedMessageCategory = "good";
 let chinaMapReady = false;
+let activeMapBounds = { ...CHINA_BOUNDS };
 let cityRegionSvgLayer = null;
+let cityBoundaryData = window.CITY_BOUNDARY_GEOJSON || null;
+let cityBoundaryPromise = null;
+let localDataVersion = 0;
 
 function noise(seed) {
   const value = Math.sin(seed * 918.43) * 10000;
@@ -388,6 +395,10 @@ function normalizeMessage(message) {
   };
 }
 
+function markLocalDataChanged() {
+  localDataVersion += 1;
+}
+
 function applySiteData(data) {
   if (Array.isArray(data.meetings)) {
     saveCustomMeetings(data.meetings);
@@ -413,10 +424,16 @@ function applySiteData(data) {
 }
 
 async function loadSiteData() {
+  const versionAtStart = localDataVersion;
+
   try {
     const response = await fetch(`${SITE_DATA_PATH}?v=${Date.now()}`, { cache: "no-store" });
 
     if (!response.ok) {
+      return;
+    }
+
+    if (versionAtStart !== localDataVersion) {
       return;
     }
 
@@ -622,6 +639,7 @@ async function addMeeting() {
     return;
   }
 
+  markLocalDataChanged();
   const wasEditing = Boolean(editingMeetingId);
   addMeetingButton.disabled = true;
   showAddHint("\u6b63\u5728\u4fdd\u5b58\u5230 GitHub...");
@@ -648,6 +666,7 @@ async function deleteMeeting(id) {
   const nextMeetings = loadCustomMeetings().filter((meeting) => meeting.id !== id);
 
   saveCustomMeetings(nextMeetings);
+  markLocalDataChanged();
   if (editingMeetingId === id) {
     resetMeetingEditor(true);
   }
@@ -697,18 +716,96 @@ function getCityById(id) {
   return MAP_CITIES.find((city) => city.id === id);
 }
 
+function getCityBoundary(cityId) {
+  return cityBoundaryData && cityBoundaryData[cityId]
+    ? cityBoundaryData[cityId]
+    : null;
+}
+
+function expandBounds(bounds, lng, lat) {
+  if (!Number.isFinite(lng) || !Number.isFinite(lat) || lat < MAP_MIN_VISIBLE_LAT) {
+    return bounds;
+  }
+
+  bounds.minLng = Math.min(bounds.minLng, lng);
+  bounds.maxLng = Math.max(bounds.maxLng, lng);
+  bounds.minLat = Math.min(bounds.minLat, lat);
+  bounds.maxLat = Math.max(bounds.maxLat, lat);
+  return bounds;
+}
+
+function walkCoordinates(coordinates, callback) {
+  if (!Array.isArray(coordinates)) {
+    return;
+  }
+
+  if (typeof coordinates[0] === "number" && typeof coordinates[1] === "number") {
+    callback(coordinates[0], coordinates[1]);
+    return;
+  }
+
+  coordinates.forEach((item) => walkCoordinates(item, callback));
+}
+
+function getFeatureCollectionBounds(data) {
+  const bounds = {
+    minLng: Infinity,
+    maxLng: -Infinity,
+    minLat: Infinity,
+    maxLat: -Infinity
+  };
+  const features = Array.isArray(data && data.features) ? data.features : [];
+
+  features.forEach((feature) => {
+    if (!feature || !feature.geometry) {
+      return;
+    }
+
+    walkCoordinates(feature.geometry.coordinates, (lng, lat) => expandBounds(bounds, lng, lat));
+  });
+
+  if (!Number.isFinite(bounds.minLng) || !Number.isFinite(bounds.minLat)) {
+    return { ...CHINA_BOUNDS };
+  }
+
+  return bounds;
+}
+
+function getCityBoundaryCenter(city) {
+  const boundary = getCityBoundary(city.id);
+  const feature = boundary && Array.isArray(boundary.features) ? boundary.features[0] : null;
+  const properties = feature && feature.properties ? feature.properties : {};
+  const point = Array.isArray(properties.centroid) ? properties.centroid : properties.center;
+
+  if (Array.isArray(point) && Number.isFinite(point[0]) && Number.isFinite(point[1])) {
+    return { lng: point[0], lat: point[1] };
+  }
+
+  const bounds = boundary ? getFeatureCollectionBounds(boundary) : null;
+
+  if (bounds) {
+    return {
+      lng: (bounds.minLng + bounds.maxLng) / 2,
+      lat: (bounds.minLat + bounds.maxLat) / 2
+    };
+  }
+
+  return { lng: city.lng, lat: city.lat };
+}
+
 function projectMapPoint(lng, lat) {
   const usableWidth = MAP_VIEWBOX.width - 56;
   const usableHeight = MAP_VIEWBOX.height - 56;
-  const x = 28 + ((lng - CHINA_BOUNDS.minLng) / (CHINA_BOUNDS.maxLng - CHINA_BOUNDS.minLng)) * usableWidth;
-  const y = 28 + ((CHINA_BOUNDS.maxLat - lat) / (CHINA_BOUNDS.maxLat - CHINA_BOUNDS.minLat)) * usableHeight;
+  const x = 28 + ((lng - activeMapBounds.minLng) / (activeMapBounds.maxLng - activeMapBounds.minLng)) * usableWidth;
+  const y = 28 + ((activeMapBounds.maxLat - lat) / (activeMapBounds.maxLat - activeMapBounds.minLat)) * usableHeight;
 
   return { x, y };
 }
 
 function getCityMapPosition(city) {
   if (Number.isFinite(city.lng) && Number.isFinite(city.lat)) {
-    const point = projectMapPoint(city.lng, city.lat);
+    const center = getCityBoundaryCenter(city);
+    const point = projectMapPoint(center.lng, center.lat);
 
     return {
       x: (point.x / MAP_VIEWBOX.width) * 100,
@@ -770,6 +867,7 @@ function setupChinaMapSvg() {
 }
 
 function renderChinaGeoMap(data) {
+  activeMapBounds = getFeatureCollectionBounds(data);
   setupChinaMapSvg();
 
   const geoLayer = chinaMapSvg && chinaMapSvg.querySelector("#chinaGeoLayer");
@@ -816,23 +914,68 @@ async function loadChinaGeoMap() {
   }
 }
 
+function loadCityBoundaries() {
+  if (cityBoundaryData) {
+    return Promise.resolve(cityBoundaryData);
+  }
+
+  if (cityBoundaryPromise) {
+    return cityBoundaryPromise;
+  }
+
+  cityBoundaryPromise = fetch(`${CITY_BOUNDARIES_PATH}?v=1`, { cache: "force-cache" })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("city boundaries load failed");
+      }
+
+      return response.json();
+    })
+    .then((data) => {
+      cityBoundaryData = data;
+      renderCityMarkers();
+      return data;
+    })
+    .catch((error) => {
+      cityBoundaryPromise = null;
+      throw error;
+    });
+
+  return cityBoundaryPromise;
+}
+
 function renderVisitedCityRegions(visitedCities) {
   if (!cityRegionSvgLayer) {
     return;
   }
 
   cityRegionSvgLayer.innerHTML = visitedCities.map((city) => {
-    const point = projectMapPoint(city.lng, city.lat);
+    const boundary = getCityBoundary(city.id);
+    const features = boundary && Array.isArray(boundary.features) ? boundary.features : [];
+    const paths = features.map((feature) => geometryToSvgPath(feature.geometry)).filter(Boolean);
 
-    return `
-      <ellipse
-        class="city-region-geo"
-        cx="${point.x.toFixed(2)}"
-        cy="${point.y.toFixed(2)}"
-        rx="15"
-        ry="10"
-      ></ellipse>
-    `;
+    if (paths.length > 0) {
+      return paths.map((path) => `
+        <path
+          class="city-region-geo"
+          data-city-id="${city.id}"
+          d="${path}"
+        ></path>
+      `).join("");
+    }
+
+    const center = getCityBoundaryCenter(city);
+    const point = projectMapPoint(center.lng, center.lat);
+    const size = 9;
+    const fallbackPath = [
+      `M${(point.x - size).toFixed(2)} ${(point.y - 3).toFixed(2)}`,
+      `L${(point.x - 2).toFixed(2)} ${(point.y - size).toFixed(2)}`,
+      `L${(point.x + size).toFixed(2)} ${(point.y - 2).toFixed(2)}`,
+      `L${(point.x + 4).toFixed(2)} ${(point.y + size).toFixed(2)}`,
+      `L${(point.x - 7).toFixed(2)} ${(point.y + 6).toFixed(2)} Z`
+    ].join(" ");
+
+    return `<path class="city-region-geo city-region-fallback" data-city-id="${city.id}" d="${fallbackPath}"></path>`;
   }).join("");
 }
 
@@ -888,7 +1031,7 @@ function resizePhotoFile(file) {
       const image = new Image();
 
       image.onload = () => {
-        const maxSize = 1400;
+        const maxSize = 960;
         const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
         const width = Math.max(1, Math.round(image.width * scale));
         const height = Math.max(1, Math.round(image.height * scale));
@@ -900,7 +1043,7 @@ function resizePhotoFile(file) {
         context.drawImage(image, 0, 0, width, height);
         resolve({
           name: file.name,
-          src: canvas.toDataURL("image/jpeg", 0.84)
+          src: canvas.toDataURL("image/jpeg", 0.72)
         });
       };
 
@@ -966,6 +1109,7 @@ function openMapPage() {
   }
 
   loadChinaGeoMap();
+  loadCityBoundaries().catch(() => {});
   renderCityMarkers();
   mapPage.classList.remove("is-hidden");
   mapView.classList.remove("is-hidden");
@@ -994,11 +1138,39 @@ function closeMapPage() {
 
 function resetCityUpload() {
   selectedCityFiles = [];
+  appendTargetAlbumId = null;
   cityAlbumNameInput.value = "";
+  cityAlbumNameInput.disabled = false;
   cityPhotoInput.value = "";
   cityUploadHint.textContent = "\u5148\u9009\u62e9\u7167\u7247\uff0c\u518d\u7ed9\u8fd9\u4e00\u7ec4\u8d77\u540d\u5b57\u3002";
   cityUploadHint.classList.remove("is-error");
+  saveCityAlbumButton.textContent = "\u4fdd\u5b58\u8fd9\u4e00\u7ec4";
   cityUploadPanel.classList.add("is-hidden");
+}
+
+function openCityUploadPanel(albumId = null) {
+  selectedCityFiles = [];
+  cityPhotoInput.value = "";
+  cityUploadHint.classList.remove("is-error");
+  appendTargetAlbumId = albumId;
+
+  if (albumId) {
+    const album = cityAlbumsCache.find((item) => item.id === albumId);
+
+    cityAlbumNameInput.value = album ? album.title : "";
+    cityAlbumNameInput.disabled = true;
+    cityUploadHint.textContent = album
+      ? `继续往「${album.title}」里添加照片。`
+      : "\u7ee7\u7eed\u5f80\u8fd9\u4e00\u7ec4\u91cc\u6dfb\u52a0\u7167\u7247\u3002";
+    saveCityAlbumButton.textContent = "\u8ffd\u52a0\u5230\u8fd9\u4e00\u7ec4";
+  } else {
+    cityAlbumNameInput.value = "";
+    cityAlbumNameInput.disabled = false;
+    cityUploadHint.textContent = "\u5148\u9009\u62e9\u7167\u7247\uff0c\u518d\u7ed9\u8fd9\u4e00\u7ec4\u8d77\u540d\u5b57\u3002";
+    saveCityAlbumButton.textContent = "\u4fdd\u5b58\u8fd9\u4e00\u7ec4";
+  }
+
+  cityUploadPanel.classList.remove("is-hidden");
 }
 
 function renderCityAlbums(cityId) {
@@ -1025,10 +1197,13 @@ function renderCityAlbums(cityId) {
               <p class="card-label">${new Date(album.createdAt).toLocaleDateString("zh-CN")}</p>
               <h3>${escapeHtml(album.title)}</h3>
             </div>
-            <button class="city-album-delete" type="button" data-delete-album="${album.id}">\u5220\u9664</button>
+            <div class="city-album-actions">
+              <button class="city-album-append" type="button" data-append-album="${album.id}">\u8ffd\u52a0\u7167\u7247</button>
+              <button class="city-album-delete" type="button" data-delete-album="${album.id}">\u5220\u9664</button>
+            </div>
           </div>
           <div class="city-photo-grid">
-            ${album.photos.map((photo) => `<img src="${photo.src}" alt="${escapeHtml(photo.name || album.title)}" loading="lazy" />`).join("")}
+            ${album.photos.map((photo) => `<img src="${photo.src}" alt="${escapeHtml(photo.name || album.title)}" loading="lazy" decoding="async" fetchpriority="low" />`).join("")}
           </div>
         </article>
       `).join("");
@@ -1069,6 +1244,7 @@ async function addVisitedCity() {
 
   const previousVisitedCityIds = visitedCityIds.slice();
 
+  markLocalDataChanged();
   visitedCityIds = visitedCityIds.concat(cityId);
   renderCityMarkers();
   cityAddHint.textContent = `\u6b63\u5728\u70b9\u4eae${city.name}\uff0c\u5e76\u4fdd\u5b58\u5230 GitHub...`;
@@ -1113,25 +1289,34 @@ async function saveSelectedCityAlbum() {
   }
 
   const city = getCityById(selectedCityId);
-  const title = (cityAlbumNameInput.value || "").trim() || `${city.name}\u7684\u4e00\u7ec4\u7167\u7247`;
+  const targetAlbum = appendTargetAlbumId
+    ? cityAlbumsCache.find((album) => album.id === appendTargetAlbumId)
+    : null;
+  const title = targetAlbum
+    ? targetAlbum.title
+    : ((cityAlbumNameInput.value || "").trim() || `${city.name}\u7684\u4e00\u7ec4\u7167\u7247`);
 
   saveCityAlbumButton.disabled = true;
+  markLocalDataChanged();
   cityUploadHint.textContent = "\u6b63\u5728\u538b\u7f29\u7167\u7247\u5e76\u4fdd\u5b58\u5230 GitHub...";
   cityUploadHint.classList.remove("is-error");
 
   try {
-    const photosForAlbum = [];
+    const photosForAlbum = await Promise.all(selectedCityFiles.map((file) => resizePhotoFile(file)));
 
-    for (const file of selectedCityFiles) {
-      photosForAlbum.push(await resizePhotoFile(file));
+    if (appendTargetAlbumId) {
+      await saveToGithub("append-city-album-photos", {
+        albumId: appendTargetAlbumId,
+        photos: photosForAlbum
+      });
+    } else {
+      await saveToGithub("add-city-album", {
+        cityId: selectedCityId,
+        cityName: city.name,
+        title: title.slice(0, 22),
+        photos: photosForAlbum
+      });
     }
-
-    await saveToGithub("add-city-album", {
-      cityId: selectedCityId,
-      cityName: city.name,
-      title: title.slice(0, 22),
-      photos: photosForAlbum
-    });
 
     resetCityUpload();
     renderCityAlbums(selectedCityId);
@@ -1338,6 +1523,7 @@ async function sendMessage() {
     createdAt: Date.now()
   };
 
+  markLocalDataChanged();
   messagesCache = messagesCache.concat(message);
   messageTextInput.value = "";
   renderMessages();
@@ -1360,6 +1546,7 @@ async function sendMessage() {
 async function deleteMessage(messageId) {
   const previousMessages = messagesCache.slice();
 
+  markLocalDataChanged();
   messagesCache = messagesCache.filter((message) => message.id !== messageId);
   renderMessages();
   showMessageHint("正在删除留言...");
@@ -1632,7 +1819,7 @@ cityMarkerList.addEventListener("click", (event) => {
 addVisitedCityButton.addEventListener("click", addVisitedCity);
 backMapButton.addEventListener("click", backToMapView);
 addCityAlbumButton.addEventListener("click", () => {
-  cityUploadPanel.classList.remove("is-hidden");
+  openCityUploadPanel();
   cityAlbumNameInput.focus({ preventScroll: true });
 });
 chooseCityPhotosButton.addEventListener("click", () => {
@@ -1648,12 +1835,24 @@ cityAlbumNameInput.addEventListener("keydown", (event) => {
   }
 });
 cityAlbumGroups.addEventListener("click", (event) => {
+  const appendButton = event.target.closest("[data-append-album]");
   const deleteButton = event.target.closest("[data-delete-album]");
 
-  if (!deleteButton || !selectedCityId) {
+  if (!selectedCityId) {
     return;
   }
 
+  if (appendButton) {
+    openCityUploadPanel(appendButton.dataset.appendAlbum);
+    chooseCityPhotosButton.focus({ preventScroll: true });
+    return;
+  }
+
+  if (!deleteButton) {
+    return;
+  }
+
+  markLocalDataChanged();
   deleteCityAlbum(deleteButton.dataset.deleteAlbum)
     .then(() => renderCityAlbums(selectedCityId))
     .catch((error) => {
