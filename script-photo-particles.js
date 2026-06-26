@@ -220,6 +220,10 @@ function padNumber(value) {
   return String(value).padStart(2, "0");
 }
 
+function clampNumber(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => {
     const entities = {
@@ -1675,16 +1679,22 @@ function buildPhotoParticles() {
   selected.forEach((photo, index) => {
     const item = document.createElement("button");
     const image = document.createElement("img");
-    const size = isMobile ? 30 + noise(index + 1) * 42 : 34 + noise(index + 1) * 58;
-    const startX = -2 + noise(index + 5) * 104;
-    const startY = -2 + noise(index + 9) * 104;
-    const dx1 = -12 + noise(index + 13) * 24;
-    const dy1 = -9 + noise(index + 17) * 18;
-    const dx2 = -15 + noise(index + 21) * 30;
-    const dy2 = -12 + noise(index + 25) * 24;
-    const rotate = -18 + noise(index + 29) * 36;
-    const scale = 0.78 + noise(index + 33) * 0.58;
-    const duration = 18 + noise(index + 37) * 22;
+    const routeBiased = index % 4 !== 0;
+    const routeProgress = noise(index + 3);
+    const routeX = 18 + routeProgress * 66;
+    const routeY = 29 + routeProgress * 46;
+    const spreadX = routeBiased ? -16 + noise(index + 5) * 32 : -8 + noise(index + 7) * 116;
+    const spreadY = routeBiased ? -18 + noise(index + 9) * 36 : -8 + noise(index + 11) * 116;
+    const startX = routeBiased ? clampNumber(routeX + spreadX, -4, 104) : clampNumber(spreadX, -4, 104);
+    const startY = routeBiased ? clampNumber(routeY + spreadY, -4, 104) : clampNumber(spreadY, -4, 104);
+    const size = isMobile ? 24 + noise(index + 1) * 34 : 26 + noise(index + 1) * 52;
+    const dx1 = routeBiased ? 3 + noise(index + 13) * 10 : -16 + noise(index + 13) * 32;
+    const dy1 = routeBiased ? 2 + noise(index + 17) * 9 : -12 + noise(index + 17) * 24;
+    const dx2 = routeBiased ? 8 + noise(index + 21) * 16 : -22 + noise(index + 21) * 44;
+    const dy2 = routeBiased ? 5 + noise(index + 25) * 13 : -16 + noise(index + 25) * 32;
+    const rotate = -14 + noise(index + 29) * 28;
+    const scale = 0.72 + noise(index + 33) * 0.54;
+    const duration = 24 + noise(index + 37) * 26;
 
     item.className = `photo-dot depth-${index % 6}`;
     item.type = "button";
