@@ -214,9 +214,9 @@ input {
 
 .home-route-line {
   position: absolute;
-  left: 19vw;
-  top: 33vh;
-  width: min(58vw, 820px);
+  left: 17vw;
+  top: 36vh;
+  width: min(66vw, 900px);
   height: 1px;
   border-radius: 999px;
   background:
@@ -224,10 +224,54 @@ input {
   box-shadow:
     0 0 20px rgba(45, 212, 191, 0.42),
     0 0 54px rgba(59, 130, 246, 0.2);
-  transform: rotate(28deg);
+  transform: rotate(24deg);
   transform-origin: left center;
-  opacity: 0.62;
+  opacity: 0.44;
   animation: routePulse 5.6s ease-in-out infinite;
+}
+
+.home-galaxy-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(24vw, 320px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(255, 248, 242, 0.22), rgba(45, 212, 191, 0.14) 26%, rgba(59, 130, 246, 0.08) 48%, transparent 70%);
+  filter: blur(10px);
+  transform: translate(-50%, -50%);
+  opacity: 0.72;
+}
+
+.home-orbit-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border: 1px solid rgba(219, 255, 249, 0.1);
+  border-radius: 50%;
+  box-shadow:
+    0 0 28px rgba(45, 212, 191, 0.1),
+    inset 0 0 24px rgba(59, 130, 246, 0.06);
+  transform: translate(-50%, -50%) rotate(-18deg) scaleY(0.56);
+  opacity: 0.54;
+}
+
+.home-orbit-ring.orbit-1 {
+  width: min(46vw, 650px);
+  aspect-ratio: 1;
+}
+
+.home-orbit-ring.orbit-2 {
+  width: min(68vw, 960px);
+  aspect-ratio: 1;
+  opacity: 0.42;
+}
+
+.home-orbit-ring.orbit-3 {
+  width: min(92vw, 1280px);
+  aspect-ratio: 1;
+  opacity: 0.3;
 }
 
 .home-city-node {
@@ -288,6 +332,27 @@ input {
     linear-gradient(145deg, rgba(9, 26, 39, 0.48), rgba(5, 18, 31, 0.2) 48%, rgba(20, 49, 63, 0.35));
 }
 
+.photo-flow::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: 124vw;
+  height: 124vw;
+  max-width: 1560px;
+  max-height: 1560px;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(from 18deg, transparent 0deg 18deg, rgba(164, 244, 232, 0.08) 19deg 20deg, transparent 21deg 42deg),
+    radial-gradient(circle, transparent 0 18%, rgba(45, 212, 191, 0.11) 18.5% 19%, transparent 19.5% 32%, rgba(255, 248, 242, 0.08) 32.5% 33%, transparent 33.5% 48%, rgba(59, 130, 246, 0.08) 48.5% 49%, transparent 49.5%);
+  filter: blur(0.2px);
+  mask-image: radial-gradient(circle, transparent 0 12%, black 18% 62%, transparent 72%);
+  opacity: 0.68;
+  transform: translate(-50%, -50%) rotate(-16deg) scaleY(0.58);
+  animation: galaxyFieldTurn 68s linear infinite;
+}
+
 .photo-flow::after {
   content: "";
   position: absolute;
@@ -344,16 +409,17 @@ input {
   position: absolute;
   inset: 0;
   z-index: 6;
+  perspective: 1000px;
 }
 
 .photo-dot {
   position: absolute;
   left: 0;
   top: 0;
-  aspect-ratio: 1;
+  aspect-ratio: var(--ratio);
   padding: 0;
   border: 0;
-  border-radius: 999px;
+  border-radius: clamp(8px, 1.3vw, 16px);
   appearance: none;
   overflow: hidden;
   background: rgba(7, 18, 30, 0.72);
@@ -366,8 +432,9 @@ input {
     translate3d(var(--x), var(--y), 0)
     translate(-50%, -50%)
     rotate(var(--r))
-    scale(var(--s));
-  animation: photoParticleMove var(--dur) ease-in-out var(--delay) infinite alternate;
+    scale(var(--s))
+    rotateX(var(--rx));
+  animation: photoGalaxyOrbit var(--dur) ease-in-out var(--delay) infinite alternate;
   will-change: transform;
 }
 
@@ -389,7 +456,7 @@ input {
   position: absolute;
   inset: -30%;
   border-radius: inherit;
-  background: radial-gradient(circle, rgba(219, 255, 249, 0.2), transparent 62%);
+  background: radial-gradient(circle, rgba(219, 255, 249, 0.18), transparent 64%);
   z-index: -1;
 }
 
@@ -405,12 +472,18 @@ input {
   opacity: 0.48;
 }
 
-.photo-dot.depth-0 { z-index: 9; opacity: 0.98; }
-.photo-dot.depth-1 { z-index: 8; opacity: 0.9; }
-.photo-dot.depth-2 { z-index: 7; opacity: 0.84; filter: saturate(0.98); }
-.photo-dot.depth-3 { z-index: 6; opacity: 0.74; filter: saturate(0.94); }
-.photo-dot.depth-4 { z-index: 5; opacity: 0.64; filter: saturate(0.9); }
-.photo-dot.depth-5 { z-index: 4; opacity: 0.54; filter: saturate(0.84); }
+.photo-dot.is-featured {
+  box-shadow:
+    0 20px 58px rgba(0, 0, 0, 0.36),
+    0 0 36px rgba(219, 255, 249, 0.18);
+}
+
+.photo-dot.depth-0 { z-index: 16; opacity: 0.98; }
+.photo-dot.depth-1 { z-index: 14; opacity: 0.92; }
+.photo-dot.depth-2 { z-index: 12; opacity: 0.84; filter: saturate(0.98); }
+.photo-dot.depth-3 { z-index: 10; opacity: 0.74; filter: saturate(0.94); }
+.photo-dot.depth-4 { z-index: 8; opacity: 0.64; filter: saturate(0.9); }
+.photo-dot.depth-5 { z-index: 6; opacity: 0.54; filter: saturate(0.84); }
 
 .home-actions {
   position: absolute;
@@ -1917,27 +1990,39 @@ body.message-open .home-actions {
   }
 }
 
-@keyframes photoParticleMove {
+@keyframes galaxyFieldTurn {
+  0% {
+    transform: translate(-50%, -50%) rotate(-16deg) scaleY(0.58);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(344deg) scaleY(0.58);
+  }
+}
+
+@keyframes photoGalaxyOrbit {
   0% {
     transform:
       translate3d(var(--x), var(--y), 0)
       translate(-50%, -50%)
       rotate(var(--r))
-      scale(var(--s));
+      scale(var(--s))
+      rotateX(var(--rx));
   }
   50% {
     transform:
       translate3d(calc(var(--x) + var(--dx1)), calc(var(--y) + var(--dy1)), 0)
       translate(-50%, -50%)
-      rotate(calc(var(--r) * -0.45))
-      scale(calc(var(--s) * 1.08));
+      rotate(calc(var(--r) + var(--spin)))
+      scale(calc(var(--s) * var(--pulse)))
+      rotateX(var(--rx));
   }
   100% {
     transform:
       translate3d(calc(var(--x) + var(--dx2)), calc(var(--y) + var(--dy2)), 0)
       translate(-50%, -50%)
-      rotate(calc(var(--r) * 0.7))
-      scale(calc(var(--s) * 0.94));
+      rotate(calc(var(--r) + var(--spin2)))
+      scale(calc(var(--s) * 0.94))
+      rotateX(var(--rx));
   }
 }
 
@@ -2299,9 +2384,9 @@ body.story-open .pig-pet {
   }
 
   .home-route-line {
-    left: 14vw;
-    top: 35vh;
-    width: 72vw;
+    left: 12vw;
+    top: 38vh;
+    width: 76vw;
   }
 
   .home-memory-mark {
@@ -2466,6 +2551,18 @@ body.story-open .pig-pet {
   .home-city-shenzhen {
     right: 20px;
     bottom: 26vh;
+  }
+
+  .home-orbit-ring.orbit-1 {
+    width: 72vw;
+  }
+
+  .home-orbit-ring.orbit-2 {
+    width: 108vw;
+  }
+
+  .home-orbit-ring.orbit-3 {
+    width: 148vw;
   }
 
   .home-memory-mark {

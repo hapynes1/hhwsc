@@ -1609,26 +1609,52 @@ async function deleteMessage(messageId) {
 
 function getParticleTargetCount() {
   const screenArea = window.innerWidth * window.innerHeight;
+  const photoVolume = getHomePhotos().length || 1;
+  const densityBoost = photoVolume > 120 ? 1.12 : 1;
 
   if (window.matchMedia("(max-width: 700px)").matches) {
-    return Math.min(96, Math.max(72, Math.round(screenArea / 4200)));
+    return Math.min(96, Math.max(58, Math.round((screenArea / 5000) * densityBoost)));
   }
 
   if (window.matchMedia("(max-width: 1100px)").matches) {
-    return Math.min(132, Math.max(108, Math.round(screenArea / 6500)));
+    return Math.min(126, Math.max(82, Math.round((screenArea / 7600) * densityBoost)));
   }
 
-  return Math.min(190, Math.max(148, Math.round(screenArea / 8500)));
+  return Math.min(168, Math.max(112, Math.round((screenArea / 9200) * densityBoost)));
 }
 
 function pickParticlePhotos(targetCount) {
-  if (photos.length === 0) {
+  const homePhotos = getHomePhotos();
+
+  if (homePhotos.length === 0) {
     return [];
   }
 
+  const rotationOffset = Math.floor(Date.now() / (1000 * 60 * 60 * 6)) * 13;
+
   return Array.from({ length: targetCount }, (_, index) => {
-    const photoIndex = (index * 7 + Math.floor(index / photos.length) * 11) % photos.length;
-    return photos[photoIndex];
+    const photoIndex = (rotationOffset + index * 7 + Math.floor(index / homePhotos.length) * 11) % homePhotos.length;
+    return homePhotos[photoIndex];
+  });
+}
+
+function getHomePhotos() {
+  const albumPhotos = cityAlbumsCache.flatMap((album) => Array.isArray(album.photos)
+    ? album.photos.map((photo) => ({
+      src: photo.src,
+      name: photo.name || album.title || album.cityName || "city-photo"
+    }))
+    : []);
+  const merged = photos.concat(albumPhotos).filter((photo) => photo && photo.src);
+  const seen = new Set();
+
+  return merged.filter((photo) => {
+    if (seen.has(photo.src)) {
+      return false;
+    }
+
+    seen.add(photo.src);
+    return true;
   });
 }
 
@@ -1663,12 +1689,13 @@ function buildPhotoBackdrop(selected) {
 }
 
 function buildPhotoParticles() {
-  if (!photoFlow || photos.length === 0 || photoFlow.children.length > 0) {
+  if (!photoFlow || getHomePhotos().length === 0 || photoFlow.children.length > 0) {
     return;
   }
 
   const isMobile = window.matchMedia("(max-width: 700px)").matches;
   const selected = pickParticlePhotos(getParticleTargetCount());
+  const homePhotoCount = getHomePhotos().length;
   const layer = document.createElement("div");
 
   photoFlow.className = "photo-flow photo-particle-flow";
@@ -1679,26 +1706,39 @@ function buildPhotoParticles() {
   selected.forEach((photo, index) => {
     const item = document.createElement("button");
     const image = document.createElement("img");
-    const routeBiased = index % 4 !== 0;
-    const routeProgress = noise(index + 3);
-    const routeX = 18 + routeProgress * 66;
-    const routeY = 29 + routeProgress * 46;
-    const spreadX = routeBiased ? -16 + noise(index + 5) * 32 : -8 + noise(index + 7) * 116;
-    const spreadY = routeBiased ? -18 + noise(index + 9) * 36 : -8 + noise(index + 11) * 116;
-    const startX = routeBiased ? clampNumber(routeX + spreadX, -4, 104) : clampNumber(spreadX, -4, 104);
-    const startY = routeBiased ? clampNumber(routeY + spreadY, -4, 104) : clampNumber(spreadY, -4, 104);
-    const size = isMobile ? 24 + noise(index + 1) * 34 : 26 + noise(index + 1) * 52;
-    const dx1 = routeBiased ? 3 + noise(index + 13) * 10 : -16 + noise(index + 13) * 32;
-    const dy1 = routeBiased ? 2 + noise(index + 17) * 9 : -12 + noise(index + 17) * 24;
-    const dx2 = routeBiased ? 8 + noise(index + 21) * 16 : -22 + noise(index + 21) * 44;
-    const dy2 = routeBiased ? 5 + noise(index + 25) * 13 : -16 + noise(index + 25) * 32;
-    const rotate = -14 + noise(index + 29) * 28;
-    const scale = 0.72 + noise(index + 33) * 0.54;
-    const duration = 24 + noise(index + 37) * 26;
+    const total = Math.max(1, selected.length - 1);
+    const progress = index / total;
+    const arm = index % 4;
+    const angle = progress * Math.PI * 7.2 + arm * (Math.PI / 2) + noise(index + 3) * 0.62;
+    const radius = 8 + Math.pow(progress, 0.72) * (isMobile ? 67 : 62) + noise(index + 5) * 6;
+    const ellipseY = isMobile ? 0.74 : 0.58;
+    const startX = clampNumber(50 + Math.cos(angle) * radius * 0.95, -8, 108);
+    const startY = clampNumber(50 + Math.sin(angle) * radius * ellipseY, -8, 108);
+    const tangential = angle + Math.PI / 2;
+    const orbitRange = 4 + noise(index + 13) * (isMobile ? 7 : 10);
+    const dx1 = Math.cos(tangential) * orbitRange + (-1.5 + noise(index + 17) * 3);
+    const dy1 = Math.sin(tangential) * orbitRange * ellipseY + (-1.5 + noise(index + 19) * 3);
+    const dx2 = Math.cos(tangential) * orbitRange * 1.8 + (-2 + noise(index + 21) * 4);
+    const dy2 = Math.sin(tangential) * orbitRange * 1.8 * ellipseY + (-2 + noise(index + 23) * 4);
+    const photoVolume = Math.max(homePhotoCount, selected.length);
+    const density = clampNumber(photoVolume / 260, 0, 1);
+    const baseSize = isMobile ? 46 - density * 13 : 58 - density * 22;
+    const sizeRange = isMobile ? 34 - density * 7 : 64 - density * 26;
+    const featured = index % 19 === 0 || (index % 11 === 0 && progress < 0.55);
+    const distanceScale = 1.08 - progress * 0.32;
+    const size = (baseSize + noise(index + 1) * sizeRange) * distanceScale * (featured ? 1.34 : 1);
+    const rotate = -16 + noise(index + 29) * 32;
+    const scale = 0.72 + noise(index + 33) * 0.42;
+    const duration = 26 + progress * 24 + noise(index + 37) * 18;
+    const spin = -7 + noise(index + 43) * 14;
+    const ratio = noise(index + 47) > 0.42 ? 1.34 : 0.78;
+    const tilt = -5 + noise(index + 51) * 10;
+    const depth = Math.min(5, Math.floor(progress * 6));
 
-    item.className = `photo-dot depth-${index % 6}`;
+    item.className = `photo-dot depth-${depth}${featured ? " is-featured" : ""}`;
     item.type = "button";
     item.style.width = `${Math.round(size)}px`;
+    item.style.setProperty("--ratio", ratio.toFixed(2));
     item.style.setProperty("--x", `${startX.toFixed(2)}vw`);
     item.style.setProperty("--y", `${startY.toFixed(2)}vh`);
     item.style.setProperty("--dx1", `${dx1.toFixed(2)}vw`);
@@ -1707,6 +1747,10 @@ function buildPhotoParticles() {
     item.style.setProperty("--dy2", `${dy2.toFixed(2)}vh`);
     item.style.setProperty("--r", `${rotate.toFixed(2)}deg`);
     item.style.setProperty("--s", scale.toFixed(3));
+    item.style.setProperty("--rx", `${tilt.toFixed(2)}deg`);
+    item.style.setProperty("--spin", `${spin.toFixed(2)}deg`);
+    item.style.setProperty("--spin2", `${(spin * 1.8).toFixed(2)}deg`);
+    item.style.setProperty("--pulse", (1.03 + noise(index + 53) * 0.12).toFixed(3));
     item.style.setProperty("--dur", `${duration.toFixed(2)}s`);
     item.style.setProperty("--delay", `${(-duration * noise(index + 41)).toFixed(2)}s`);
 
