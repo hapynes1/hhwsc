@@ -1610,17 +1610,17 @@ async function deleteMessage(messageId) {
 function getParticleTargetCount() {
   const screenArea = window.innerWidth * window.innerHeight;
   const photoVolume = getHomePhotos().length || 1;
-  const densityBoost = photoVolume > 120 ? 1.12 : 1;
+  const densityBoost = photoVolume > 120 ? 1.08 : 1;
 
   if (window.matchMedia("(max-width: 700px)").matches) {
-    return Math.min(96, Math.max(58, Math.round((screenArea / 5000) * densityBoost)));
+    return Math.min(44, Math.max(30, Math.round((screenArea / 7600) * densityBoost)));
   }
 
   if (window.matchMedia("(max-width: 1100px)").matches) {
-    return Math.min(126, Math.max(82, Math.round((screenArea / 7600) * densityBoost)));
+    return Math.min(58, Math.max(40, Math.round((screenArea / 13000) * densityBoost)));
   }
 
-  return Math.min(168, Math.max(112, Math.round((screenArea / 9200) * densityBoost)));
+  return Math.min(76, Math.max(50, Math.round((screenArea / 25000) * densityBoost)));
 }
 
 function pickParticlePhotos(targetCount) {
@@ -1699,7 +1699,6 @@ function buildPhotoParticles() {
   const layer = document.createElement("div");
 
   photoFlow.className = "photo-flow photo-particle-flow";
-  buildPhotoBackdrop(selected);
   layer.className = "photo-particle-layer";
   photoFlow.appendChild(layer);
 
@@ -1708,32 +1707,35 @@ function buildPhotoParticles() {
     const image = document.createElement("img");
     const total = Math.max(1, selected.length - 1);
     const progress = index / total;
-    const arm = index % 4;
-    const angle = progress * Math.PI * 7.2 + arm * (Math.PI / 2) + noise(index + 3) * 0.62;
-    const radius = 8 + Math.pow(progress, 0.72) * (isMobile ? 67 : 62) + noise(index + 5) * 6;
-    const ellipseY = isMobile ? 0.74 : 0.58;
-    const startX = clampNumber(50 + Math.cos(angle) * radius * 0.95, -8, 108);
-    const startY = clampNumber(50 + Math.sin(angle) * radius * ellipseY, -8, 108);
+    const ringCount = isMobile ? 4 : 6;
+    const ringIndex = Math.min(ringCount - 1, index % ringCount);
+    const ringProgress = ringCount === 1 ? 0 : ringIndex / (ringCount - 1);
+    const lap = Math.floor(index / ringCount);
+    const angle = lap * 1.32 + ringIndex * 0.52 + progress * Math.PI * 1.8 + noise(index + 3) * 0.24;
+    const radiusX = (isMobile ? 16 : 13) + ringProgress * (isMobile ? 42 : 48) + noise(index + 5) * 2.4;
+    const radiusY = (isMobile ? 10 : 8) + ringProgress * (isMobile ? 26 : 30) + noise(index + 7) * 1.8;
+    const startX = clampNumber(50 + Math.cos(angle) * radiusX, 4, 96);
+    const startY = clampNumber(50 + Math.sin(angle) * radiusY, 7, 93);
     const tangential = angle + Math.PI / 2;
-    const orbitRange = 4 + noise(index + 13) * (isMobile ? 7 : 10);
-    const dx1 = Math.cos(tangential) * orbitRange + (-1.5 + noise(index + 17) * 3);
-    const dy1 = Math.sin(tangential) * orbitRange * ellipseY + (-1.5 + noise(index + 19) * 3);
-    const dx2 = Math.cos(tangential) * orbitRange * 1.8 + (-2 + noise(index + 21) * 4);
-    const dy2 = Math.sin(tangential) * orbitRange * 1.8 * ellipseY + (-2 + noise(index + 23) * 4);
+    const orbitRange = 0.7 + ringProgress * (isMobile ? 1.7 : 2.2) + noise(index + 13) * 0.8;
+    const dx1 = Math.cos(tangential) * orbitRange + (-0.24 + noise(index + 17) * 0.48);
+    const dy1 = Math.sin(tangential) * orbitRange * 0.62 + (-0.18 + noise(index + 19) * 0.36);
+    const dx2 = Math.cos(tangential) * orbitRange * 1.35 + (-0.32 + noise(index + 21) * 0.64);
+    const dy2 = Math.sin(tangential) * orbitRange * 0.85 + (-0.24 + noise(index + 23) * 0.48);
     const photoVolume = Math.max(homePhotoCount, selected.length);
     const density = clampNumber(photoVolume / 260, 0, 1);
-    const baseSize = isMobile ? 46 - density * 13 : 58 - density * 22;
-    const sizeRange = isMobile ? 34 - density * 7 : 64 - density * 26;
-    const featured = index % 19 === 0 || (index % 11 === 0 && progress < 0.55);
-    const distanceScale = 1.08 - progress * 0.32;
-    const size = (baseSize + noise(index + 1) * sizeRange) * distanceScale * (featured ? 1.34 : 1);
-    const rotate = -16 + noise(index + 29) * 32;
-    const scale = 0.72 + noise(index + 33) * 0.42;
-    const duration = 26 + progress * 24 + noise(index + 37) * 18;
-    const spin = -7 + noise(index + 43) * 14;
-    const ratio = noise(index + 47) > 0.42 ? 1.34 : 0.78;
-    const tilt = -5 + noise(index + 51) * 10;
-    const depth = Math.min(5, Math.floor(progress * 6));
+    const baseSize = isMobile ? 36 - density * 7 : 42 - density * 12;
+    const outerSize = isMobile ? 48 - density * 10 : 96 - density * 26;
+    const featured = ringIndex >= ringCount - 2 && (index % 4 === 0 || index % 9 === 0);
+    const size = baseSize + ringProgress * outerSize + noise(index + 1) * (isMobile ? 14 : 28) + (featured ? (isMobile ? 18 : 42) : 0);
+    const rotate = Math.sin(angle) * -9 + (-5 + noise(index + 29) * 10);
+    const scale = 0.88 + ringProgress * 0.18 + noise(index + 33) * 0.08;
+    const duration = 18 + ringProgress * 16 + noise(index + 37) * 10;
+    const spin = -1.8 + noise(index + 43) * 3.6;
+    const ratio = noise(index + 47) > 0.16 ? 1.56 : 0.82;
+    const tilt = -3 + noise(index + 51) * 6;
+    const yaw = -7 + ringProgress * 9 + noise(index + 55) * 5;
+    const depth = Math.max(0, Math.min(5, 5 - ringIndex));
 
     item.className = `photo-dot depth-${depth}${featured ? " is-featured" : ""}`;
     item.type = "button";
@@ -1748,6 +1750,7 @@ function buildPhotoParticles() {
     item.style.setProperty("--r", `${rotate.toFixed(2)}deg`);
     item.style.setProperty("--s", scale.toFixed(3));
     item.style.setProperty("--rx", `${tilt.toFixed(2)}deg`);
+    item.style.setProperty("--ry", `${yaw.toFixed(2)}deg`);
     item.style.setProperty("--spin", `${spin.toFixed(2)}deg`);
     item.style.setProperty("--spin2", `${(spin * 1.8).toFixed(2)}deg`);
     item.style.setProperty("--pulse", (1.03 + noise(index + 53) * 0.12).toFixed(3));
