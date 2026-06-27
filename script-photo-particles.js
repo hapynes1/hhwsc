@@ -1653,11 +1653,16 @@ function pickParticlePhotos(targetCount) {
   }
 
   const rotationOffset = Math.floor(Date.now() / (1000 * 60 * 60 * 6)) * 13;
+  const count = Math.min(targetCount, homePhotos.length);
 
-  return Array.from({ length: targetCount }, (_, index) => {
-    const photoIndex = (rotationOffset + index * 7 + Math.floor(index / homePhotos.length) * 11) % homePhotos.length;
-    return homePhotos[photoIndex];
-  });
+  return homePhotos
+    .map((photo, index) => ({
+      photo,
+      score: noise((index + 1) * 37 + rotationOffset)
+    }))
+    .sort((a, b) => a.score - b.score)
+    .slice(0, count)
+    .map((item) => item.photo);
 }
 
 function getHomePhotos() {

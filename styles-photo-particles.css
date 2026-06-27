@@ -160,8 +160,8 @@ input {
   isolation: isolate;
   background-color: #061722;
   background:
-    linear-gradient(90deg, rgba(2, 10, 18, 0.3), transparent 16% 84%, rgba(2, 10, 18, 0.34)),
-    radial-gradient(circle at 50% 52%, rgba(92, 212, 206, 0.08), transparent 31rem),
+    linear-gradient(90deg, rgba(2, 10, 18, 0.68), rgba(3, 17, 25, 0.36) 22% 78%, rgba(2, 10, 18, 0.72)),
+    radial-gradient(circle at 50% 52%, rgba(92, 212, 206, 0.12), rgba(3, 18, 28, 0.58) 36rem, rgba(2, 10, 18, 0.82) 100%),
     url("assets/home-memory-map-bg.png?v=1") center / cover no-repeat;
 }
 
@@ -188,8 +188,8 @@ input {
 .showcase::after {
   z-index: 5;
   background:
-    radial-gradient(circle at 50% 50%, transparent 0 56%, rgba(5, 16, 27, 0.16) 78%, rgba(2, 10, 18, 0.58) 100%),
-    linear-gradient(180deg, rgba(2, 10, 18, 0.16), transparent 24% 76%, rgba(2, 10, 18, 0.28));
+    radial-gradient(circle at 50% 50%, rgba(5, 20, 29, 0.18) 0 48%, rgba(5, 16, 27, 0.42) 72%, rgba(2, 10, 18, 0.78) 100%),
+    linear-gradient(180deg, rgba(2, 10, 18, 0.36), transparent 28% 70%, rgba(2, 10, 18, 0.46));
 }
 
 .showcase-glow {
@@ -358,7 +358,7 @@ input {
 
 .photo-flow::before {
   content: "";
-  display: none;
+  display: block;
   position: absolute;
   left: 50%;
   top: 50%;
