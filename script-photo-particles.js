@@ -1688,6 +1688,96 @@ function buildPhotoBackdrop(selected) {
   photoFlow.appendChild(layer);
 }
 
+function getHomePhotoSlot(index, total, isMobile, photoVolume) {
+  const density = clampNumber(photoVolume / 420, 0, 1);
+  const desktopHeroSlots = [
+    { x: 15, y: 14, width: 220, ratio: 1.58, rotate: -9, scale: 1, depth: 0, rx: -4, ry: -8 },
+    { x: 28, y: 35, width: 178, ratio: 1.52, rotate: -10, scale: 0.98, depth: 1, rx: -2, ry: 6 },
+    { x: 15, y: 77, width: 236, ratio: 1.52, rotate: -14, scale: 1, depth: 0, rx: 3, ry: -9 },
+    { x: 33, y: 84, width: 172, ratio: 1.55, rotate: 6, scale: 0.98, depth: 1, rx: 2, ry: 5 },
+    { x: 69, y: 73, width: 236, ratio: 1.56, rotate: 8, scale: 1, depth: 0, rx: 2, ry: -7 },
+    { x: 79, y: 34, width: 178, ratio: 1.5, rotate: 10, scale: 0.98, depth: 1, rx: -2, ry: -5 },
+    { x: 45, y: 12, width: 118, ratio: 1.52, rotate: 1, scale: 0.94, depth: 2, rx: -3, ry: 3 },
+    { x: 60, y: 18, width: 104, ratio: 1.5, rotate: 5, scale: 0.92, depth: 3, rx: -2, ry: -4 },
+    { x: 49, y: 82, width: 132, ratio: 1.56, rotate: -4, scale: 0.95, depth: 2, rx: 2, ry: 3 }
+  ];
+  const mobileHeroSlots = [
+    { x: 23, y: 18, width: 132, ratio: 1.5, rotate: -8, scale: 0.96, depth: 0, rx: -2, ry: -5 },
+    { x: 76, y: 32, width: 118, ratio: 1.48, rotate: 9, scale: 0.94, depth: 1, rx: -2, ry: 5 },
+    { x: 25, y: 78, width: 138, ratio: 1.52, rotate: -10, scale: 0.96, depth: 0, rx: 2, ry: -5 },
+    { x: 72, y: 74, width: 136, ratio: 1.52, rotate: 8, scale: 0.96, depth: 0, rx: 2, ry: 4 }
+  ];
+  const heroSlots = isMobile ? mobileHeroSlots : desktopHeroSlots;
+
+  if (index < heroSlots.length) {
+    const slot = heroSlots[index];
+    const shrink = 1 - density * (isMobile ? 0.12 : 0.16);
+
+    return {
+      ...slot,
+      width: slot.width * shrink,
+      dx1: -0.3 + noise(index + 101) * 0.6,
+      dy1: -0.22 + noise(index + 103) * 0.44,
+      dx2: -0.42 + noise(index + 107) * 0.84,
+      dy2: -0.28 + noise(index + 109) * 0.56,
+      spin: -1.1 + noise(index + 111) * 2.2,
+      duration: 26 + noise(index + 113) * 12,
+      pulse: 1.018 + noise(index + 115) * 0.035,
+      hero: true,
+      featured: true
+    };
+  }
+
+  const rings = isMobile
+    ? [
+      { rx: 12, ry: 8, width: 36, ratio: 1.52, step: 1.72, offset: 0.4, depth: 5 },
+      { rx: 22, ry: 14, width: 46, ratio: 1.52, step: 1.38, offset: 1.1, depth: 4 },
+      { rx: 34, ry: 22, width: 58, ratio: 1.52, step: 1.08, offset: 0.2, depth: 3 }
+    ]
+    : [
+      { rx: 12, ry: 7, width: 42, ratio: 1.5, step: 1.68, offset: 0.2, depth: 5 },
+      { rx: 21, ry: 12, width: 54, ratio: 1.52, step: 1.38, offset: 1.0, depth: 4 },
+      { rx: 31, ry: 17.5, width: 70, ratio: 1.52, step: 1.12, offset: 0.4, depth: 3 },
+      { rx: 42, ry: 24, width: 88, ratio: 1.54, step: 0.94, offset: 1.2, depth: 2 }
+    ];
+  const innerIndex = index - heroSlots.length;
+  const ringIndex = innerIndex % rings.length;
+  const lap = Math.floor(innerIndex / rings.length);
+  const ring = rings[ringIndex];
+  const angle = ring.offset + lap * ring.step + progressSpread(index, total) * 0.48 + noise(index + 121) * 0.14;
+  const ringDepthScale = 0.82 + (ringIndex / Math.max(1, rings.length - 1)) * 0.28;
+  const x = clampNumber(50 + Math.cos(angle) * (ring.rx + noise(index + 123) * 1.1), 5, 95);
+  const y = clampNumber(50 + Math.sin(angle) * (ring.ry + noise(index + 127) * 0.8), 8, 92);
+  const tangential = angle + Math.PI / 2;
+  const drift = 0.45 + ringIndex * 0.32 + noise(index + 131) * 0.34;
+  const width = (ring.width + noise(index + 133) * (isMobile ? 12 : 22)) * (1 - density * 0.18);
+
+  return {
+    x,
+    y,
+    width,
+    ratio: ring.ratio,
+    rotate: Math.sin(angle) * -7 + (-3 + noise(index + 135) * 6),
+    scale: ringDepthScale,
+    depth: ring.depth,
+    rx: -3 + noise(index + 137) * 6,
+    ry: -6 + ringIndex * 3 + noise(index + 139) * 4,
+    dx1: Math.cos(tangential) * drift,
+    dy1: Math.sin(tangential) * drift * 0.62,
+    dx2: Math.cos(tangential) * drift * 1.45,
+    dy2: Math.sin(tangential) * drift * 0.9,
+    spin: -1.4 + noise(index + 141) * 2.8,
+    duration: 20 + ringIndex * 5 + noise(index + 143) * 9,
+    pulse: 1.014 + noise(index + 145) * 0.035,
+    hero: false,
+    featured: ringIndex === rings.length - 1 && index % 10 === 0
+  };
+}
+
+function progressSpread(index, total) {
+  return total <= 1 ? 0 : index / (total - 1);
+}
+
 function buildPhotoParticles() {
   if (!photoFlow || getHomePhotos().length === 0 || photoFlow.children.length > 0) {
     return;
@@ -1705,61 +1795,31 @@ function buildPhotoParticles() {
   selected.forEach((photo, index) => {
     const item = document.createElement("button");
     const image = document.createElement("img");
-    const total = Math.max(1, selected.length - 1);
-    const progress = index / total;
-    const ringCount = isMobile ? 4 : 6;
-    const ringIndex = Math.min(ringCount - 1, index % ringCount);
-    const ringProgress = ringCount === 1 ? 0 : ringIndex / (ringCount - 1);
-    const lap = Math.floor(index / ringCount);
-    const angle = lap * 1.32 + ringIndex * 0.52 + progress * Math.PI * 1.8 + noise(index + 3) * 0.24;
-    const radiusX = (isMobile ? 16 : 13) + ringProgress * (isMobile ? 42 : 48) + noise(index + 5) * 2.4;
-    const radiusY = (isMobile ? 10 : 8) + ringProgress * (isMobile ? 26 : 30) + noise(index + 7) * 1.8;
-    const startX = clampNumber(50 + Math.cos(angle) * radiusX, 4, 96);
-    const startY = clampNumber(50 + Math.sin(angle) * radiusY, 7, 93);
-    const tangential = angle + Math.PI / 2;
-    const orbitRange = 0.7 + ringProgress * (isMobile ? 1.7 : 2.2) + noise(index + 13) * 0.8;
-    const dx1 = Math.cos(tangential) * orbitRange + (-0.24 + noise(index + 17) * 0.48);
-    const dy1 = Math.sin(tangential) * orbitRange * 0.62 + (-0.18 + noise(index + 19) * 0.36);
-    const dx2 = Math.cos(tangential) * orbitRange * 1.35 + (-0.32 + noise(index + 21) * 0.64);
-    const dy2 = Math.sin(tangential) * orbitRange * 0.85 + (-0.24 + noise(index + 23) * 0.48);
-    const photoVolume = Math.max(homePhotoCount, selected.length);
-    const density = clampNumber(photoVolume / 260, 0, 1);
-    const baseSize = isMobile ? 36 - density * 7 : 42 - density * 12;
-    const outerSize = isMobile ? 48 - density * 10 : 96 - density * 26;
-    const featured = ringIndex >= ringCount - 2 && (index % 4 === 0 || index % 9 === 0);
-    const size = baseSize + ringProgress * outerSize + noise(index + 1) * (isMobile ? 14 : 28) + (featured ? (isMobile ? 18 : 42) : 0);
-    const rotate = Math.sin(angle) * -9 + (-5 + noise(index + 29) * 10);
-    const scale = 0.88 + ringProgress * 0.18 + noise(index + 33) * 0.08;
-    const duration = 18 + ringProgress * 16 + noise(index + 37) * 10;
-    const spin = -1.8 + noise(index + 43) * 3.6;
-    const ratio = noise(index + 47) > 0.16 ? 1.56 : 0.82;
-    const tilt = -3 + noise(index + 51) * 6;
-    const yaw = -7 + ringProgress * 9 + noise(index + 55) * 5;
-    const depth = Math.max(0, Math.min(5, 5 - ringIndex));
+    const slot = getHomePhotoSlot(index, selected.length, isMobile, Math.max(homePhotoCount, selected.length));
 
-    item.className = `photo-dot depth-${depth}${featured ? " is-featured" : ""}`;
+    item.className = `photo-dot depth-${slot.depth}${slot.hero ? " is-hero" : ""}${slot.featured ? " is-featured" : ""}`;
     item.type = "button";
-    item.style.width = `${Math.round(size)}px`;
-    item.style.setProperty("--ratio", ratio.toFixed(2));
-    item.style.setProperty("--x", `${startX.toFixed(2)}vw`);
-    item.style.setProperty("--y", `${startY.toFixed(2)}vh`);
-    item.style.setProperty("--dx1", `${dx1.toFixed(2)}vw`);
-    item.style.setProperty("--dy1", `${dy1.toFixed(2)}vh`);
-    item.style.setProperty("--dx2", `${dx2.toFixed(2)}vw`);
-    item.style.setProperty("--dy2", `${dy2.toFixed(2)}vh`);
-    item.style.setProperty("--r", `${rotate.toFixed(2)}deg`);
-    item.style.setProperty("--s", scale.toFixed(3));
-    item.style.setProperty("--rx", `${tilt.toFixed(2)}deg`);
-    item.style.setProperty("--ry", `${yaw.toFixed(2)}deg`);
-    item.style.setProperty("--spin", `${spin.toFixed(2)}deg`);
-    item.style.setProperty("--spin2", `${(spin * 1.8).toFixed(2)}deg`);
-    item.style.setProperty("--pulse", (1.03 + noise(index + 53) * 0.12).toFixed(3));
-    item.style.setProperty("--dur", `${duration.toFixed(2)}s`);
-    item.style.setProperty("--delay", `${(-duration * noise(index + 41)).toFixed(2)}s`);
+    item.style.width = `${Math.round(slot.width)}px`;
+    item.style.setProperty("--ratio", slot.ratio.toFixed(2));
+    item.style.setProperty("--x", `${slot.x.toFixed(2)}vw`);
+    item.style.setProperty("--y", `${slot.y.toFixed(2)}vh`);
+    item.style.setProperty("--dx1", `${slot.dx1.toFixed(2)}vw`);
+    item.style.setProperty("--dy1", `${slot.dy1.toFixed(2)}vh`);
+    item.style.setProperty("--dx2", `${slot.dx2.toFixed(2)}vw`);
+    item.style.setProperty("--dy2", `${slot.dy2.toFixed(2)}vh`);
+    item.style.setProperty("--r", `${slot.rotate.toFixed(2)}deg`);
+    item.style.setProperty("--s", slot.scale.toFixed(3));
+    item.style.setProperty("--rx", `${slot.rx.toFixed(2)}deg`);
+    item.style.setProperty("--ry", `${slot.ry.toFixed(2)}deg`);
+    item.style.setProperty("--spin", `${slot.spin.toFixed(2)}deg`);
+    item.style.setProperty("--spin2", `${(slot.spin * 1.6).toFixed(2)}deg`);
+    item.style.setProperty("--pulse", slot.pulse.toFixed(3));
+    item.style.setProperty("--dur", `${slot.duration.toFixed(2)}s`);
+    item.style.setProperty("--delay", `${(-slot.duration * noise(index + 41)).toFixed(2)}s`);
 
     image.src = photo.src;
     image.alt = "";
-    image.loading = "eager";
+    image.loading = index < 18 ? "eager" : "lazy";
     image.decoding = "async";
     item.appendChild(image);
     layer.appendChild(item);
