@@ -216,6 +216,15 @@ let cityBoundaryPromise = null;
 let localDataVersion = 0;
 let homeCanvasState = null;
 let homeCanvasFrame = 0;
+const HOME_RANDOM_SEED = (() => {
+  if (window.crypto && window.crypto.getRandomValues) {
+    const seed = new Uint32Array(1);
+    window.crypto.getRandomValues(seed);
+    return seed[0];
+  }
+
+  return Math.floor(Math.random() * 2 ** 32);
+})();
 
 function noise(seed) {
   const value = Math.sin(seed * 918.43) * 10000;
@@ -1632,17 +1641,17 @@ async function sendMessage() {
 function getParticleTargetCount() {
   const screenArea = window.innerWidth * window.innerHeight;
   const photoVolume = getHomePhotos().length || 1;
-  const densityBoost = photoVolume > 120 ? 1.08 : 1;
+  const densityBoost = photoVolume > 180 ? 1.12 : photoVolume > 120 ? 1.06 : 1;
 
   if (window.matchMedia("(max-width: 700px)").matches) {
-    return Math.min(44, Math.max(30, Math.round((screenArea / 7600) * densityBoost)));
+    return Math.min(72, Math.max(44, Math.round((screenArea / 3800) * densityBoost)));
   }
 
   if (window.matchMedia("(max-width: 1100px)").matches) {
-    return Math.min(58, Math.max(40, Math.round((screenArea / 13000) * densityBoost)));
+    return Math.min(116, Math.max(72, Math.round((screenArea / 6500) * densityBoost)));
   }
 
-  return Math.min(76, Math.max(50, Math.round((screenArea / 25000) * densityBoost)));
+  return Math.min(150, Math.max(96, Math.round((screenArea / 12500) * densityBoost)));
 }
 
 function pickParticlePhotos(targetCount) {
@@ -1652,13 +1661,12 @@ function pickParticlePhotos(targetCount) {
     return [];
   }
 
-  const rotationOffset = Math.floor(Date.now() / (1000 * 60 * 60 * 6)) * 13;
   const count = Math.min(targetCount, homePhotos.length);
 
   return homePhotos
     .map((photo, index) => ({
       photo,
-      score: noise((index + 1) * 37 + rotationOffset)
+      score: noise((index + 1) * 37 + HOME_RANDOM_SEED)
     }))
     .sort((a, b) => a.score - b.score)
     .slice(0, count)
@@ -1718,21 +1726,21 @@ function buildPhotoBackdrop(selected) {
 function getHomePhotoSlot(index, total, isMobile, photoVolume) {
   const density = clampNumber(photoVolume / 420, 0, 1);
   const desktopHeroSlots = [
-    { x: 15, y: 14, width: 220, ratio: 1.58, rotate: -9, scale: 1, depth: 0, rx: -4, ry: -8 },
-    { x: 28, y: 35, width: 178, ratio: 1.52, rotate: -10, scale: 0.98, depth: 1, rx: -2, ry: 6 },
-    { x: 15, y: 77, width: 236, ratio: 1.52, rotate: -14, scale: 1, depth: 0, rx: 3, ry: -9 },
-    { x: 33, y: 84, width: 172, ratio: 1.55, rotate: 6, scale: 0.98, depth: 1, rx: 2, ry: 5 },
-    { x: 69, y: 73, width: 236, ratio: 1.56, rotate: 8, scale: 1, depth: 0, rx: 2, ry: -7 },
-    { x: 79, y: 34, width: 178, ratio: 1.5, rotate: 10, scale: 0.98, depth: 1, rx: -2, ry: -5 },
-    { x: 45, y: 12, width: 118, ratio: 1.52, rotate: 1, scale: 0.94, depth: 2, rx: -3, ry: 3 },
-    { x: 60, y: 18, width: 104, ratio: 1.5, rotate: 5, scale: 0.92, depth: 3, rx: -2, ry: -4 },
-    { x: 49, y: 82, width: 132, ratio: 1.56, rotate: -4, scale: 0.95, depth: 2, rx: 2, ry: 3 }
+    { x: 15, y: 14, width: 154, ratio: 1.58, rotate: -9, scale: 1, depth: 0, rx: -4, ry: -8 },
+    { x: 28, y: 35, width: 124, ratio: 1.52, rotate: -10, scale: 0.98, depth: 1, rx: -2, ry: 6 },
+    { x: 15, y: 77, width: 166, ratio: 1.52, rotate: -14, scale: 1, depth: 0, rx: 3, ry: -9 },
+    { x: 33, y: 84, width: 120, ratio: 1.55, rotate: 6, scale: 0.98, depth: 1, rx: 2, ry: 5 },
+    { x: 69, y: 73, width: 166, ratio: 1.56, rotate: 8, scale: 1, depth: 0, rx: 2, ry: -7 },
+    { x: 79, y: 34, width: 124, ratio: 1.5, rotate: 10, scale: 0.98, depth: 1, rx: -2, ry: -5 },
+    { x: 45, y: 12, width: 86, ratio: 1.52, rotate: 1, scale: 0.94, depth: 2, rx: -3, ry: 3 },
+    { x: 60, y: 18, width: 78, ratio: 1.5, rotate: 5, scale: 0.92, depth: 3, rx: -2, ry: -4 },
+    { x: 49, y: 82, width: 96, ratio: 1.56, rotate: -4, scale: 0.95, depth: 2, rx: 2, ry: 3 }
   ];
   const mobileHeroSlots = [
-    { x: 23, y: 18, width: 132, ratio: 1.5, rotate: -8, scale: 0.96, depth: 0, rx: -2, ry: -5 },
-    { x: 76, y: 32, width: 118, ratio: 1.48, rotate: 9, scale: 0.94, depth: 1, rx: -2, ry: 5 },
-    { x: 25, y: 78, width: 138, ratio: 1.52, rotate: -10, scale: 0.96, depth: 0, rx: 2, ry: -5 },
-    { x: 72, y: 74, width: 136, ratio: 1.52, rotate: 8, scale: 0.96, depth: 0, rx: 2, ry: 4 }
+    { x: 23, y: 18, width: 96, ratio: 1.5, rotate: -8, scale: 0.96, depth: 0, rx: -2, ry: -5 },
+    { x: 76, y: 32, width: 86, ratio: 1.48, rotate: 9, scale: 0.94, depth: 1, rx: -2, ry: 5 },
+    { x: 25, y: 78, width: 100, ratio: 1.52, rotate: -10, scale: 0.96, depth: 0, rx: 2, ry: -5 },
+    { x: 72, y: 74, width: 98, ratio: 1.52, rotate: 8, scale: 0.96, depth: 0, rx: 2, ry: 4 }
   ];
   const heroSlots = isMobile ? mobileHeroSlots : desktopHeroSlots;
 
@@ -1757,15 +1765,15 @@ function getHomePhotoSlot(index, total, isMobile, photoVolume) {
 
   const rings = isMobile
     ? [
-      { rx: 12, ry: 8, width: 36, ratio: 1.52, step: 1.72, offset: 0.4, depth: 5 },
-      { rx: 22, ry: 14, width: 46, ratio: 1.52, step: 1.38, offset: 1.1, depth: 4 },
-      { rx: 34, ry: 22, width: 58, ratio: 1.52, step: 1.08, offset: 0.2, depth: 3 }
+      { rx: 12, ry: 8, width: 24, ratio: 1.52, step: 1.72, offset: 0.4, depth: 5 },
+      { rx: 22, ry: 14, width: 31, ratio: 1.52, step: 1.38, offset: 1.1, depth: 4 },
+      { rx: 34, ry: 22, width: 40, ratio: 1.52, step: 1.08, offset: 0.2, depth: 3 }
     ]
     : [
-      { rx: 12, ry: 7, width: 42, ratio: 1.5, step: 1.68, offset: 0.2, depth: 5 },
-      { rx: 21, ry: 12, width: 54, ratio: 1.52, step: 1.38, offset: 1.0, depth: 4 },
-      { rx: 31, ry: 17.5, width: 70, ratio: 1.52, step: 1.12, offset: 0.4, depth: 3 },
-      { rx: 42, ry: 24, width: 88, ratio: 1.54, step: 0.94, offset: 1.2, depth: 2 }
+      { rx: 12, ry: 7, width: 28, ratio: 1.5, step: 1.68, offset: 0.2, depth: 5 },
+      { rx: 21, ry: 12, width: 36, ratio: 1.52, step: 1.38, offset: 1.0, depth: 4 },
+      { rx: 31, ry: 17.5, width: 48, ratio: 1.52, step: 1.12, offset: 0.4, depth: 3 },
+      { rx: 42, ry: 24, width: 60, ratio: 1.54, step: 0.94, offset: 1.2, depth: 2 }
     ];
   const innerIndex = index - heroSlots.length;
   const ringIndex = innerIndex % rings.length;
@@ -1777,7 +1785,7 @@ function getHomePhotoSlot(index, total, isMobile, photoVolume) {
   const y = clampNumber(50 + Math.sin(angle) * (ring.ry + noise(index + 127) * 0.8), 8, 92);
   const tangential = angle + Math.PI / 2;
   const drift = 0.45 + ringIndex * 0.32 + noise(index + 131) * 0.34;
-  const width = (ring.width + noise(index + 133) * (isMobile ? 12 : 22)) * (1 - density * 0.18);
+  const width = (ring.width + noise(index + 133) * (isMobile ? 8 : 14)) * (1 - density * 0.12);
 
   return {
     x,
