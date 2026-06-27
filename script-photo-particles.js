@@ -1391,7 +1391,6 @@ function renderMessageCards(messages) {
             <time>${formatDateTime(message.createdAt)}</time>
           </div>
           <p>${escapeHtml(message.text)}</p>
-          <button class="message-delete-button" type="button" data-delete-message="${message.id}">删除</button>
         </div>
       </article>
     `;
@@ -1586,24 +1585,6 @@ async function sendMessage() {
     showMessageHint(error.message || "留言保存失败。请确认是在 Vercel 网站里操作。", true);
   } finally {
     sendMessageButton.disabled = false;
-  }
-}
-
-async function deleteMessage(messageId) {
-  const previousMessages = messagesCache.slice();
-
-  markLocalDataChanged();
-  messagesCache = messagesCache.filter((message) => message.id !== messageId);
-  renderMessages();
-  showMessageHint("正在删除留言...");
-
-  try {
-    await saveMessagesToGithub();
-    showMessageHint("已删除。");
-  } catch (error) {
-    messagesCache = previousMessages;
-    renderMessages();
-    showMessageHint(error.message || "删除失败，GitHub 没有更新。", true);
   }
 }
 
@@ -1934,13 +1915,6 @@ messageTextInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
     event.preventDefault();
     sendMessage();
-  }
-});
-messageList.addEventListener("click", (event) => {
-  const deleteButton = event.target.closest("[data-delete-message]");
-
-  if (deleteButton) {
-    deleteMessage(deleteButton.dataset.deleteMessage);
   }
 });
 
