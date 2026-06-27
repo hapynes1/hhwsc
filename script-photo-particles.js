@@ -1897,7 +1897,7 @@ function refreshHomePhotoCanvas() {
   const homePhotoCount = getHomePhotos().length;
   const images = new Map();
 
-  homeCanvasState.entries = selected.map((photo, index) => {
+  const entries = selected.map((photo, index) => {
     const slot = getHomePhotoSlot(index, selected.length, isMobile, Math.max(homePhotoCount, selected.length));
     const existingImage = homeCanvasState.images.get(photo.src);
     const image = existingImage || createCanvasPhotoImage(photo);
@@ -1911,17 +1911,88 @@ function refreshHomePhotoCanvas() {
       index
     };
   });
+
+  homeCanvasState.entries = easeHomePhotoOverlaps(entries, isMobile);
   homeCanvasState.images = images;
   photoFlow.classList.toggle("is-clickable", selected.length > 0);
+}
+
+function getHomeCardScale(isMobile, canvasWidth) {
+  return isMobile
+    ? clampNumber(canvasWidth / 390, 0.78, 1.08)
+    : clampNumber(canvasWidth / 1440, 0.78, 1.22);
+}
+
+function getSlotBounds(slot, isMobile) {
+  const { width, height } = homeCanvasState;
+  const screenScale = getHomeCardScale(isMobile, width);
+  const cardWidthPercent = ((slot.width * screenScale * slot.scale) / width) * 100;
+  const cardHeightPercent = ((slot.width * screenScale * slot.scale / slot.ratio) / height) * 100;
+  const inflate = slot.hero ? 1.14 : 1.08;
+
+  return {
+    x: slot.x,
+    y: slot.y,
+    halfWidth: cardWidthPercent * inflate * 0.5 + 0.2,
+    halfHeight: cardHeightPercent * inflate * 0.5 + 0.2
+  };
+}
+
+function easeHomePhotoOverlaps(entries, isMobile) {
+  if (!homeCanvasState || entries.length < 2) {
+    return entries;
+  }
+
+  const crowdScale = entries.length > 130 ? 0.74 : entries.length > 100 ? 0.8 : entries.length > 76 ? 0.86 : 1;
+  const relaxed = entries.map((entry) => {
+    const slot = { ...entry.slot };
+
+    slot.width *= slot.hero ? Math.max(crowdScale + 0.08, 0.86) : crowdScale;
+    return { ...entry, slot };
+  });
+  const iterations = isMobile ? 10 : 14;
+
+  for (let pass = 0; pass < iterations; pass += 1) {
+    for (let index = 0; index < relaxed.length; index += 1) {
+      for (let nextIndex = index + 1; nextIndex < relaxed.length; nextIndex += 1) {
+        const current = relaxed[index];
+        const next = relaxed[nextIndex];
+        const currentBounds = getSlotBounds(current.slot, isMobile);
+        const nextBounds = getSlotBounds(next.slot, isMobile);
+        const deltaX = nextBounds.x - currentBounds.x || (noise(index + nextIndex + 401) - 0.5) * 0.8;
+        const deltaY = nextBounds.y - currentBounds.y || (noise(index + nextIndex + 409) - 0.5) * 0.8;
+        const overlapX = currentBounds.halfWidth + nextBounds.halfWidth - Math.abs(deltaX);
+        const overlapY = currentBounds.halfHeight + nextBounds.halfHeight - Math.abs(deltaY);
+
+        if (overlapX <= 0 || overlapY <= 0) {
+          continue;
+        }
+
+        const push = Math.min(isMobile ? 0.9 : 0.72, Math.min(overlapX, overlapY) * 0.26);
+        const currentWeight = current.slot.hero ? 0.38 : 0.5;
+        const nextWeight = next.slot.hero ? 0.38 : 0.5;
+
+        if (overlapX < overlapY) {
+          const direction = deltaX > 0 ? 1 : -1;
+          current.slot.x = clampNumber(current.slot.x - direction * push * currentWeight, 5, 95);
+          next.slot.x = clampNumber(next.slot.x + direction * push * nextWeight, 5, 95);
+        } else {
+          const direction = deltaY > 0 ? 1 : -1;
+          current.slot.y = clampNumber(current.slot.y - direction * push * currentWeight, 7, 93);
+          next.slot.y = clampNumber(next.slot.y + direction * push * nextWeight, 7, 93);
+        }
+      }
+    }
+  }
+
+  return relaxed;
 }
 
 function drawCanvasPhoto(entry, now) {
   const { ctx, width, height } = homeCanvasState;
   const { photo, image, slot, seed } = entry;
   const phase = now / (slot.duration * 1000) * Math.PI * 2 + seed * Math.PI * 2;
-  const screenScale = window.matchMedia("(max-width: 700px)").matches
-    ? clampNumber(width / 390, 0.78, 1.08)
-    : clampNumber(width / 1440, 0.78, 1.22);
+  const screenScale = getHomeCardScale(window.matchMedia("(max-width: 700px)").matches, width);
   const pulse = 1 + Math.sin(phase * 0.9) * ((slot.pulse || 1.02) - 1);
   const centerX = (slot.x / 100) * width
     + Math.sin(phase) * (slot.dx1 / 100) * width
