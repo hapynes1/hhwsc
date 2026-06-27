@@ -160,9 +160,9 @@ input {
   isolation: isolate;
   background-color: #061722;
   background:
-    linear-gradient(90deg, rgba(2, 10, 18, 0.68), rgba(3, 17, 25, 0.36) 22% 78%, rgba(2, 10, 18, 0.72)),
-    radial-gradient(circle at 50% 52%, rgba(92, 212, 206, 0.12), rgba(3, 18, 28, 0.58) 36rem, rgba(2, 10, 18, 0.82) 100%),
-    url("assets/home-memory-map-bg.png?v=1") center / cover no-repeat;
+    linear-gradient(90deg, rgba(2, 10, 18, 0.44), rgba(3, 17, 25, 0.14) 22% 78%, rgba(2, 10, 18, 0.48)),
+    radial-gradient(circle at 50% 52%, rgba(92, 212, 206, 0.06), rgba(3, 18, 28, 0.22) 34rem, rgba(2, 10, 18, 0.52) 100%),
+    url("assets/home-starlink-bg.webp?v=1") center / cover no-repeat;
 }
 
 .showcase::before,
@@ -180,7 +180,7 @@ input {
     radial-gradient(circle, rgba(126, 236, 222, 0.22) 0 1px, transparent 1.8px);
   background-position: 0 0, 42px 38px;
   background-size: 176px 176px, 236px 236px;
-  opacity: 0.26;
+  opacity: 0.14;
   mask-image: radial-gradient(circle at 50% 48%, black, transparent 82%);
   animation: starFieldDrift 28s linear infinite;
 }
@@ -188,8 +188,8 @@ input {
 .showcase::after {
   z-index: 5;
   background:
-    radial-gradient(circle at 50% 50%, rgba(5, 20, 29, 0.18) 0 48%, rgba(5, 16, 27, 0.42) 72%, rgba(2, 10, 18, 0.78) 100%),
-    linear-gradient(180deg, rgba(2, 10, 18, 0.36), transparent 28% 70%, rgba(2, 10, 18, 0.46));
+    radial-gradient(circle at 50% 50%, rgba(5, 20, 29, 0.04) 0 48%, rgba(5, 16, 27, 0.2) 74%, rgba(2, 10, 18, 0.56) 100%),
+    linear-gradient(180deg, rgba(2, 10, 18, 0.18), transparent 30% 72%, rgba(2, 10, 18, 0.3));
 }
 
 .showcase-glow {
@@ -233,30 +233,11 @@ input {
 }
 
 .home-galaxy-core {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: min(34vw, 520px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle, rgba(255, 248, 242, 0.18), rgba(45, 212, 191, 0.1) 32%, rgba(59, 130, 246, 0.05) 54%, transparent 74%);
-  filter: blur(16px);
-  transform: translate(-50%, -50%);
-  opacity: 0.6;
+  display: none;
 }
 
 .home-orbit-ring {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  border: 1px solid rgba(255, 226, 164, 0.12);
-  border-radius: 50%;
-  box-shadow:
-    0 0 28px rgba(255, 221, 154, 0.08),
-    inset 0 0 24px rgba(59, 130, 246, 0.04);
-  transform: translate(-50%, -50%) rotate(-8deg) scaleY(0.58);
-  opacity: 0.2;
+  display: none;
 }
 
 .home-orbit-ring.orbit-1 {
@@ -358,7 +339,7 @@ input {
 
 .photo-flow::before {
   content: "";
-  display: block;
+  display: none;
   position: absolute;
   left: 50%;
   top: 50%;
