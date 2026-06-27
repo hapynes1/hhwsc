@@ -7,6 +7,10 @@ const passwordHint = document.querySelector("#passwordHint");
 const pigPet = document.querySelector("#pigPet");
 const pigBubble = document.querySelector("#pigBubble");
 const photoFlow = document.querySelector("#photoFlow");
+const photoViewer = document.querySelector("#photoViewer");
+const photoViewerImage = document.querySelector("#photoViewerImage");
+const photoViewerCaption = document.querySelector("#photoViewerCaption");
+const closePhotoViewerButton = document.querySelector("#closePhotoViewerButton");
 const openClockButton = document.querySelector("#openClockButton");
 const openMapButton = document.querySelector("#openMapButton");
 const openMessagesButton = document.querySelector("#openMessagesButton");
@@ -210,6 +214,8 @@ let cityMarkerSvgLayer = null;
 let cityBoundaryData = window.CITY_BOUNDARY_GEOJSON || null;
 let cityBoundaryPromise = null;
 let localDataVersion = 0;
+let homeCanvasState = null;
+let homeCanvasFrame = 0;
 
 function noise(seed) {
   const value = Math.sin(seed * 918.43) * 10000;
@@ -429,6 +435,7 @@ function applySiteData(data) {
   renderCountdowns();
   renderCityMarkers();
   renderMessages();
+  refreshHomePhotoCanvas();
 
   if (selectedCityId) {
     renderCityAlbums(selectedCityId);
@@ -1533,6 +1540,40 @@ function closeMessagesPage() {
   }, 560);
 }
 
+function openPhotoViewer(photo) {
+  if (!photoViewer || !photoViewerImage || !photo) {
+    return;
+  }
+
+  photoViewerImage.src = photo.src;
+  photoViewerImage.alt = photo.name ? `${photo.name} 的照片` : "放大的回忆照片";
+  if (photoViewerCaption) {
+    photoViewerCaption.textContent = photo.name || "";
+  }
+  photoViewer.classList.remove("is-hidden");
+  document.body.classList.add("photo-viewer-open");
+  window.requestAnimationFrame(() => {
+    photoViewer.classList.add("is-active");
+  });
+}
+
+function closePhotoViewer() {
+  if (!photoViewer || !photoViewer.classList.contains("is-active")) {
+    return;
+  }
+
+  photoViewer.classList.remove("is-active");
+  document.body.classList.remove("photo-viewer-open");
+  window.setTimeout(() => {
+    if (!photoViewer.classList.contains("is-active")) {
+      photoViewer.classList.add("is-hidden");
+      if (photoViewerImage) {
+        photoViewerImage.removeAttribute("src");
+      }
+    }
+  }, 260);
+}
+
 function setMessageAuthor(author) {
   selectedMessageAuthor = author === "王思澄" ? "王思澄" : "陈立都";
   messageAuthorButtons.forEach((button) => {
@@ -1759,56 +1800,286 @@ function progressSpread(index, total) {
   return total <= 1 ? 0 : index / (total - 1);
 }
 
-function buildPhotoParticles() {
-  if (!photoFlow || getHomePhotos().length === 0 || photoFlow.children.length > 0) {
+function roundedCanvasRect(ctx, x, y, width, height, radius) {
+  const safeRadius = Math.min(radius, width / 2, height / 2);
+
+  ctx.beginPath();
+  ctx.moveTo(x + safeRadius, y);
+  ctx.lineTo(x + width - safeRadius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+  ctx.lineTo(x + width, y + height - safeRadius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
+  ctx.lineTo(x + safeRadius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+  ctx.lineTo(x, y + safeRadius);
+  ctx.quadraticCurveTo(x, y, x + safeRadius, y);
+  ctx.closePath();
+}
+
+function drawCoverImage(ctx, image, x, y, width, height) {
+  const imageRatio = image.naturalWidth / image.naturalHeight;
+  const targetRatio = width / height;
+  let sourceWidth = image.naturalWidth;
+  let sourceHeight = image.naturalHeight;
+  let sourceX = 0;
+  let sourceY = 0;
+
+  if (!Number.isFinite(imageRatio) || !image.naturalWidth || !image.naturalHeight) {
+    return false;
+  }
+
+  if (imageRatio > targetRatio) {
+    sourceWidth = sourceHeight * targetRatio;
+    sourceX = (image.naturalWidth - sourceWidth) / 2;
+  } else {
+    sourceHeight = sourceWidth / targetRatio;
+    sourceY = (image.naturalHeight - sourceHeight) / 2;
+  }
+
+  ctx.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, x, y, width, height);
+  return true;
+}
+
+function createCanvasPhotoImage(photo) {
+  const image = new Image();
+
+  image.decoding = "async";
+  image.onload = () => {
+    image.dataset.ready = "true";
+    if (photoFlow) {
+      photoFlow.classList.add("is-ready");
+    }
+  };
+  image.onerror = () => {
+    image.dataset.failed = "true";
+  };
+  image.src = photo.src;
+  return image;
+}
+
+function resizeHomeCanvas() {
+  if (!homeCanvasState) {
+    return;
+  }
+
+  const { canvas, ctx } = homeCanvasState;
+  const rect = photoFlow.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  homeCanvasState.width = Math.max(1, rect.width);
+  homeCanvasState.height = Math.max(1, rect.height);
+  homeCanvasState.dpr = dpr;
+  canvas.width = Math.round(homeCanvasState.width * dpr);
+  canvas.height = Math.round(homeCanvasState.height * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function refreshHomePhotoCanvas() {
+  if (!homeCanvasState) {
     return;
   }
 
   const isMobile = window.matchMedia("(max-width: 700px)").matches;
   const selected = pickParticlePhotos(getParticleTargetCount());
   const homePhotoCount = getHomePhotos().length;
-  const layer = document.createElement("div");
+  const images = new Map();
 
-  photoFlow.className = "photo-flow photo-particle-flow";
-  layer.className = "photo-particle-layer";
-  photoFlow.appendChild(layer);
-
-  selected.forEach((photo, index) => {
-    const item = document.createElement("button");
-    const image = document.createElement("img");
+  homeCanvasState.entries = selected.map((photo, index) => {
     const slot = getHomePhotoSlot(index, selected.length, isMobile, Math.max(homePhotoCount, selected.length));
+    const existingImage = homeCanvasState.images.get(photo.src);
+    const image = existingImage || createCanvasPhotoImage(photo);
 
-    item.className = `photo-dot depth-${slot.depth}${slot.hero ? " is-hero" : ""}${slot.featured ? " is-featured" : ""}`;
-    item.type = "button";
-    item.style.width = `${Math.round(slot.width)}px`;
-    item.style.setProperty("--ratio", slot.ratio.toFixed(2));
-    item.style.setProperty("--x", `${slot.x.toFixed(2)}vw`);
-    item.style.setProperty("--y", `${slot.y.toFixed(2)}vh`);
-    item.style.setProperty("--dx1", `${slot.dx1.toFixed(2)}vw`);
-    item.style.setProperty("--dy1", `${slot.dy1.toFixed(2)}vh`);
-    item.style.setProperty("--dx2", `${slot.dx2.toFixed(2)}vw`);
-    item.style.setProperty("--dy2", `${slot.dy2.toFixed(2)}vh`);
-    item.style.setProperty("--r", `${slot.rotate.toFixed(2)}deg`);
-    item.style.setProperty("--s", slot.scale.toFixed(3));
-    item.style.setProperty("--rx", `${slot.rx.toFixed(2)}deg`);
-    item.style.setProperty("--ry", `${slot.ry.toFixed(2)}deg`);
-    item.style.setProperty("--spin", `${slot.spin.toFixed(2)}deg`);
-    item.style.setProperty("--spin2", `${(slot.spin * 1.6).toFixed(2)}deg`);
-    item.style.setProperty("--pulse", slot.pulse.toFixed(3));
-    item.style.setProperty("--dur", `${slot.duration.toFixed(2)}s`);
-    item.style.setProperty("--delay", `${(-slot.duration * noise(index + 41)).toFixed(2)}s`);
+    images.set(photo.src, image);
+    return {
+      photo,
+      image,
+      slot,
+      seed: noise(index + 300),
+      index
+    };
+  });
+  homeCanvasState.images = images;
+  photoFlow.classList.toggle("is-clickable", selected.length > 0);
+}
 
-    image.src = photo.src;
-    image.alt = "";
-    image.loading = index < 18 ? "eager" : "lazy";
-    image.decoding = "async";
-    item.appendChild(image);
-    layer.appendChild(item);
+function drawCanvasPhoto(entry, now) {
+  const { ctx, width, height } = homeCanvasState;
+  const { photo, image, slot, seed } = entry;
+  const phase = now / (slot.duration * 1000) * Math.PI * 2 + seed * Math.PI * 2;
+  const screenScale = window.matchMedia("(max-width: 700px)").matches
+    ? clampNumber(width / 390, 0.78, 1.08)
+    : clampNumber(width / 1440, 0.78, 1.22);
+  const pulse = 1 + Math.sin(phase * 0.9) * ((slot.pulse || 1.02) - 1);
+  const centerX = (slot.x / 100) * width
+    + Math.sin(phase) * (slot.dx1 / 100) * width
+    + Math.sin(phase * 0.43 + seed * 3) * 1.2;
+  const centerY = (slot.y / 100) * height
+    + Math.cos(phase * 0.96) * (slot.dy1 / 100) * height
+    + Math.cos(phase * 0.38 + seed * 4) * 1;
+  const cardWidth = slot.width * screenScale * slot.scale * pulse;
+  const cardHeight = cardWidth / slot.ratio;
+  const rotate = (slot.rotate + Math.sin(phase * 0.76) * slot.spin) * Math.PI / 180;
+  const radius = Math.max(8, Math.min(18, cardWidth * 0.065));
+  const alpha = slot.hero ? 1 : clampNumber(1 - slot.depth * 0.07, 0.6, 0.92);
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(centerX, centerY);
+  ctx.rotate(rotate);
+  ctx.shadowColor = slot.hero ? "rgba(0, 0, 0, 0.58)" : "rgba(0, 0, 0, 0.38)";
+  ctx.shadowBlur = slot.hero ? 32 : 20;
+  ctx.shadowOffsetY = slot.hero ? 22 : 12;
+  roundedCanvasRect(ctx, -cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, radius);
+  ctx.fillStyle = "rgba(8, 24, 34, 0.78)";
+  ctx.fill();
+
+  ctx.save();
+  roundedCanvasRect(ctx, -cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, radius);
+  ctx.clip();
+  ctx.shadowColor = "transparent";
+
+  if (image.dataset.ready === "true") {
+    drawCoverImage(ctx, image, -cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight);
+    ctx.fillStyle = "rgba(8, 18, 28, 0.08)";
+    ctx.fillRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight);
+  } else {
+    const gradient = ctx.createLinearGradient(-cardWidth / 2, -cardHeight / 2, cardWidth / 2, cardHeight / 2);
+    gradient.addColorStop(0, "rgba(228, 246, 241, 0.24)");
+    gradient.addColorStop(0.46, "rgba(67, 164, 169, 0.18)");
+    gradient.addColorStop(1, "rgba(255, 226, 164, 0.2)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight);
+  }
+
+  const shine = ctx.createLinearGradient(-cardWidth / 2, -cardHeight / 2, cardWidth / 2, cardHeight / 2);
+  shine.addColorStop(0, "rgba(255, 255, 255, 0.2)");
+  shine.addColorStop(0.22, "rgba(255, 255, 255, 0)");
+  shine.addColorStop(0.58, "rgba(255, 255, 255, 0.14)");
+  shine.addColorStop(0.72, "rgba(255, 255, 255, 0)");
+  ctx.fillStyle = shine;
+  ctx.fillRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight);
+  ctx.restore();
+
+  ctx.shadowColor = "transparent";
+  ctx.lineWidth = slot.hero ? 1.35 : 1;
+  ctx.strokeStyle = slot.hero ? "rgba(255, 248, 232, 0.36)" : "rgba(255, 248, 232, 0.2)";
+  roundedCanvasRect(ctx, -cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, radius);
+  ctx.stroke();
+  ctx.restore();
+
+  homeCanvasState.hitRegions.push({
+    photo,
+    x: centerX,
+    y: centerY,
+    width: cardWidth,
+    height: cardHeight,
+    rotate
+  });
+}
+
+function drawHomePhotoCanvas(now = 0) {
+  if (!homeCanvasState) {
+    return;
+  }
+
+  const { ctx, width, height, entries } = homeCanvasState;
+
+  ctx.clearRect(0, 0, width, height);
+  homeCanvasState.hitRegions = [];
+
+  entries
+    .slice()
+    .sort((a, b) => b.slot.depth - a.slot.depth)
+    .forEach((entry) => drawCanvasPhoto(entry, now));
+
+  if (entries.some((entry) => entry.image.dataset.ready === "true")) {
+    photoFlow.classList.add("is-ready");
+  }
+
+  homeCanvasFrame = window.requestAnimationFrame(drawHomePhotoCanvas);
+}
+
+function hitTestHomeCanvas(clientX, clientY) {
+  if (!homeCanvasState) {
+    return null;
+  }
+
+  const rect = homeCanvasState.canvas.getBoundingClientRect();
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+
+  for (let index = homeCanvasState.hitRegions.length - 1; index >= 0; index -= 1) {
+    const region = homeCanvasState.hitRegions[index];
+    const dx = x - region.x;
+    const dy = y - region.y;
+    const cos = Math.cos(region.rotate);
+    const sin = Math.sin(region.rotate);
+    const localX = dx * cos + dy * sin;
+    const localY = -dx * sin + dy * cos;
+
+    if (Math.abs(localX) <= region.width / 2 && Math.abs(localY) <= region.height / 2) {
+      return region.photo;
+    }
+  }
+
+  return null;
+}
+
+function buildPhotoParticles() {
+  if (!photoFlow || getHomePhotos().length === 0 || homeCanvasState) {
+    return;
+  }
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) {
+    return;
+  }
+
+  photoFlow.className = "photo-flow canvas-photo-flow";
+  canvas.className = "home-photo-canvas";
+  canvas.setAttribute("aria-label", "照片星盘画布");
+  photoFlow.textContent = "";
+  photoFlow.appendChild(canvas);
+
+  homeCanvasState = {
+    canvas,
+    ctx,
+    width: 1,
+    height: 1,
+    dpr: 1,
+    entries: [],
+    hitRegions: [],
+    images: new Map()
+  };
+
+  resizeHomeCanvas();
+  refreshHomePhotoCanvas();
+  window.cancelAnimationFrame(homeCanvasFrame);
+  homeCanvasFrame = window.requestAnimationFrame(drawHomePhotoCanvas);
+
+  canvas.addEventListener("pointermove", (event) => {
+    const hitPhoto = hitTestHomeCanvas(event.clientX, event.clientY);
+    photoFlow.classList.toggle("is-clickable", Boolean(hitPhoto));
   });
 
-  window.setTimeout(() => {
-    photoFlow.classList.add("is-ready");
-  }, 80);
+  canvas.addEventListener("pointerleave", () => {
+    photoFlow.classList.toggle("is-clickable", homeCanvasState.entries.length > 0);
+  });
+
+  canvas.addEventListener("click", (event) => {
+    const hitPhoto = hitTestHomeCanvas(event.clientX, event.clientY);
+
+    if (hitPhoto) {
+      openPhotoViewer(hitPhoto);
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    resizeHomeCanvas();
+    refreshHomePhotoCanvas();
+  });
 }
 
 function openPhotoPage() {
@@ -1892,6 +2163,16 @@ openMapButton.addEventListener("click", openMapPage);
 backHomeFromMapButton.addEventListener("click", closeMapPage);
 openMessagesButton.addEventListener("click", openMessagesPage);
 backHomeFromMessagesButton.addEventListener("click", closeMessagesPage);
+if (closePhotoViewerButton) {
+  closePhotoViewerButton.addEventListener("click", closePhotoViewer);
+}
+if (photoViewer) {
+  photoViewer.addEventListener("click", (event) => {
+    if (event.target === photoViewer) {
+      closePhotoViewer();
+    }
+  });
+}
 addMeetingButton.addEventListener("click", addMeeting);
 cancelEditButton.addEventListener("click", () => {
   resetMeetingEditor(true);
@@ -2014,6 +2295,11 @@ cityAlbumGroups.addEventListener("click", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && document.body.classList.contains("photo-viewer-open")) {
+    closePhotoViewer();
+    return;
+  }
+
   if (event.key === "Escape" && document.body.classList.contains("clock-open")) {
     closeCountdownPage();
     return;
